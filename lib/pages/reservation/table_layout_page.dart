@@ -13,16 +13,24 @@ class TableLayoutPage extends StatefulWidget {
 }
 
 class _TableLayoutPageState extends State<TableLayoutPage> {
+  final ReservationService _reservationService = ReservationService();
+  final ScrollController _tableScrollController = ScrollController();
   TableModel? _selectedTable;
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedStartTime = const TimeOfDay(hour: 18, minute: 0);
   TimeOfDay _selectedEndTime = const TimeOfDay(hour: 19, minute: 0);
 
   @override
+  void dispose() {
+    _tableScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     return StreamBuilder<List<TableModel>>(
-      stream: ReservationService().streamTables(),
+      stream: _reservationService.streamTables(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -54,6 +62,8 @@ class _TableLayoutPageState extends State<TableLayoutPage> {
             _buildFilters(),
             Expanded(
               child: GridView.builder(
+                key: const PageStorageKey<String>('customer-table-grid'),
+                controller: _tableScrollController,
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
                 itemCount: tables.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -70,9 +80,7 @@ class _TableLayoutPageState extends State<TableLayoutPage> {
                     table: table,
                     available: available,
                     selected: selected,
-                    onTap: available
-                        ? () => setState(() => _selectedTable = table)
-                        : null,
+                    onTap: available ? () => _selectTable(table) : null,
                   );
                 },
               ),
@@ -82,6 +90,18 @@ class _TableLayoutPageState extends State<TableLayoutPage> {
         );
       },
     );
+  }
+
+  void _selectTable(TableModel table) {
+    final offset = _tableScrollController.hasClients
+        ? _tableScrollController.offset
+        : 0.0;
+    setState(() => _selectedTable = table);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_tableScrollController.hasClients) return;
+      final maxOffset = _tableScrollController.position.maxScrollExtent;
+      _tableScrollController.jumpTo(offset.clamp(0.0, maxOffset));
+    });
   }
 
   Widget _buildFilters() {
@@ -398,7 +418,22 @@ class _TableCard extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            
+            Center(
+              child: Text(
+                selected
+                    ? 'กำลังเลือก'
+                    : table.status == 'occupied'
+                    ? 'กำลังใช้งาน'
+                    : table.status == 'reserved'
+                    ? 'จองแล้ว'
+                    : 'ว่าง',
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ],
         ),
       ),

@@ -50,6 +50,7 @@ class _ManageTablesTabState extends State<ManageTablesTab> {
                     service: _service,
                     onEdit: _showEditTableDialog,
                     onDelete: _confirmDeleteTable,
+                    onStatus: _showTableStatusDialog,
                   )
                 : _ReservationsView(service: _service),
           ),
@@ -198,6 +199,74 @@ class _ManageTablesTabState extends State<ManageTablesTab> {
           .delete();
     }
   }
+
+  Future<void> _showTableStatusDialog(
+    BuildContext context,
+    TableModel table,
+  ) async {
+    final status = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'สถานะโต๊ะ ${table.tableNumber}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFD6F5E6),
+                  child: Icon(Icons.check_circle, color: Color(0xFF13A66A)),
+                ),
+                title: const Text(
+                  'เปิดโต๊ะ / ว่าง',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                subtitle: const Text('ให้ลูกค้าออนไลน์เลือกจองได้'),
+                onTap: () => Navigator.pop(sheetContext, 'available'),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFFFE0E0),
+                  child: Icon(Icons.groups, color: Color(0xFFF0321C)),
+                ),
+                title: const Text(
+                  'กำลังใช้งานหน้าร้าน',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                subtitle: const Text('ป้องกันลูกค้าออนไลน์จองโต๊ะนี้'),
+                onTap: () => Navigator.pop(sheetContext, 'occupied'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (status == null || !context.mounted) return;
+    try {
+      await _service.updateTableStatus(table.id, status);
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('อัปเดตสถานะโต๊ะไม่สำเร็จ: $error')),
+        );
+      }
+    }
+  }
 }
 
 class _SectionToggle extends StatelessWidget {
@@ -273,11 +342,13 @@ class _TablesView extends StatelessWidget {
   final ReservationService service;
   final Future<void> Function(BuildContext context, TableModel table) onEdit;
   final Future<void> Function(BuildContext context, TableModel table) onDelete;
+  final Future<void> Function(BuildContext context, TableModel table) onStatus;
 
   const _TablesView({
     required this.service,
     required this.onEdit,
     required this.onDelete,
+    required this.onStatus,
   });
 
   @override
@@ -316,6 +387,7 @@ class _TablesView extends StatelessWidget {
                 table: tables[index],
                 onEdit: () => onEdit(context, tables[index]),
                 onDelete: () => onDelete(context, tables[index]),
+                onStatus: () => onStatus(context, tables[index]),
               ),
             );
           },
@@ -329,20 +401,24 @@ class _TableCard extends StatelessWidget {
   final TableModel table;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onStatus;
 
   const _TableCard({
     required this.table,
     required this.onEdit,
     required this.onDelete,
+    required this.onStatus,
   });
 
   @override
   Widget build(BuildContext context) {
-    final reserved = table.status != 'available';
+    final occupied = table.status == 'occupied';
+    final reserved = table.status == 'reserved';
+    final unavailable = occupied || reserved;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 14, 12),
       decoration: BoxDecoration(
-        color: reserved ? const Color(0xFFF0321C) : Colors.white,
+        color: unavailable ? const Color(0xFFF0321C) : Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -354,14 +430,21 @@ class _TableCard extends StatelessWidget {
               Text(
                 'โต๊ะ ${table.tableNumber}',
                 style: TextStyle(
-                  color: reserved ? Colors.white : const Color(0xFF201D1B),
+                  color: unavailable ? Colors.white : const Color(0xFF201D1B),
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              _StatusChip(
-                label: reserved ? 'จองแล้ว' : 'ว่าง',
-                reserved: reserved,
+              GestureDetector(
+                onTap: onStatus,
+                child: _StatusChip(
+                  label: occupied
+                      ? 'หน้าร้าน'
+                      : reserved
+                      ? 'จองแล้ว'
+                      : 'ว่าง',
+                  reserved: unavailable,
+                ),
               ),
             ],
           ),
@@ -369,25 +452,29 @@ class _TableCard extends StatelessWidget {
           Text(
             '${table.seatCount} ที่นั่ง',
             style: TextStyle(
-              color: reserved ? Colors.white : const Color(0xFF8B7B76),
+              color: unavailable ? Colors.white : const Color(0xFF8B7B76),
               fontSize: 13,
             ),
           ),
           const Spacer(),
-          Divider(color: reserved ? Colors.white : const Color(0xFFE9DDD7)),
+          Divider(color: unavailable ? Colors.white : const Color(0xFFE9DDD7)),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _RoundAction(
                 icon: Icons.edit_outlined,
                 color: const Color(0xFFF0321C),
-                background: reserved ? Colors.white : const Color(0xFFFFF4E8),
+                background: unavailable
+                    ? Colors.white
+                    : const Color(0xFFFFF4E8),
                 onTap: onEdit,
               ),
               _RoundAction(
                 icon: Icons.delete_outline,
                 color: const Color(0xFFFF4D55),
-                background: reserved ? Colors.white : const Color(0xFFFFE2E2),
+                background: unavailable
+                    ? Colors.white
+                    : const Color(0xFFFFE2E2),
                 onTap: onDelete,
               ),
             ],
@@ -513,11 +600,6 @@ class _ReservationCard extends StatelessWidget {
           Text('สถานะ: ${reservation.status}'),
           if (reservation.status != 'completed' &&
               reservation.status != 'cancelled') ...[
-            const SizedBox(height: 10),
-            const Text(
-              'อัปเดตสถานะ',
-              style: TextStyle(fontWeight: FontWeight.w900),
-            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 10,

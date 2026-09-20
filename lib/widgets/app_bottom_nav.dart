@@ -37,8 +37,8 @@ class AppBottomNav extends StatelessWidget {
                         duration: const Duration(milliseconds: 220),
                         curve: Curves.easeOut,
                         padding: EdgeInsets.symmetric(
-                          horizontal: selected ? 13 : 10,
-                          vertical: 8,
+                          horizontal: selected ? 18 : 10,
+                          vertical: selected ? 10 : 8,
                         ),
                         decoration: BoxDecoration(
                           color: selected
@@ -56,16 +56,16 @@ class AppBottomNav extends StatelessWidget {
                                 color: selected
                                     ? const Color(0xFFFF4D26)
                                     : const Color(0xFFB8AAA5),
-                                size: 22,
+                                size: selected ? 26 : 22,
                               ),
                               if (selected) ...[
-                                const SizedBox(width: 5),
+                                const SizedBox(width: 7),
                                 Text(
                                   item.label,
                                   maxLines: 1,
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 10,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),

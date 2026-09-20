@@ -18,6 +18,22 @@ class ReservationService {
         );
   }
 
+  Future<void> updateTableStatus(String tableId, String status) async {
+    const allowedStatuses = {'available', 'occupied'};
+    if (!allowedStatuses.contains(status)) {
+      throw ArgumentError('สถานะโต๊ะไม่ถูกต้อง');
+    }
+    final tableRef = _db.collection('tables').doc(tableId);
+    await _db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(tableRef);
+      final currentStatus = snapshot.data()?['status']?.toString();
+      if (currentStatus == 'reserved') {
+        throw Exception('โต๊ะนี้มีการจองออนไลน์อยู่ จัดการจากหน้าการจองแทน');
+      }
+      transaction.update(tableRef, {'status': status});
+    });
+  }
+
   // จองโต๊ะแบบปลอดภัยจาก race condition ด้วย transaction
   // ถ้า 2 คนกดพร้อมกัน คนแรกจะผ่าน คนที่สองจะได้ error กลับไปทันที
   Future<String?> reserveTable({

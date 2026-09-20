@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../models/menu_item_model.dart';
 import '../../services/menu_service.dart';
 import 'menu_form_page.dart';
 
-class ManageMenuTab extends StatelessWidget {
+class ManageMenuTab extends StatefulWidget {
   const ManageMenuTab({super.key});
 
+  @override
+  State<ManageMenuTab> createState() => _ManageMenuTabState();
+}
+
+class _ManageMenuTabState extends State<ManageMenuTab> {
   @override
   Widget build(BuildContext context) {
     final menuService = MenuService();
@@ -64,11 +70,15 @@ class ManageMenuTab extends StatelessWidget {
                             const SizedBox(height: 13),
                         itemBuilder: (context, index) {
                           final item = items[index];
-                          return _MenuCard(
-                            item: item,
-                            onEdit: () => _openMenuForm(context, item),
-                            onDelete: () =>
-                                _confirmDelete(context, menuService, item),
+                          return _SwipeMenuRow(
+                            key: ValueKey(item.id),
+                            onStartReached: () async {
+                              await _openMenuForm(context, item);
+                            },
+                            onEndReached: () async {
+                              await _confirmDelete(context, menuService, item);
+                            },
+                            child: _MenuCard(item: item),
                           );
                         },
                       ),
@@ -80,7 +90,7 @@ class ManageMenuTab extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmDelete(
+  Future<bool> _confirmDelete(
     BuildContext context,
     MenuService service,
     MenuItemModel item,
@@ -93,19 +103,29 @@ class ManageMenuTab extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('ยกเลิก'),
+            child: const Text('No'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('ลบ'),
+            child: const Text('Yes'),
           ),
         ],
       ),
     );
     if (shouldDelete == true) {
-      await service.deleteMenuItem(item.id);
+      try {
+        await service.deleteMenuItem(item.id);
+      } catch (error) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('ลบเมนูไม่สำเร็จ: $error')));
+        }
+        return false;
+      }
     }
+    return shouldDelete == true;
   }
 
   Future<void> _openMenuForm(
@@ -119,16 +139,101 @@ class ManageMenuTab extends StatelessWidget {
   }
 }
 
+class _SwipeMenuRow extends StatefulWidget {
+  final Widget child;
+  final Future<void> Function() onStartReached;
+  final Future<void> Function() onEndReached;
+
+  const _SwipeMenuRow({
+    super.key,
+    required this.child,
+    required this.onStartReached,
+    required this.onEndReached,
+  });
+
+  @override
+  State<_SwipeMenuRow> createState() => _SwipeMenuRowState();
+}
+
+class _SwipeMenuRowState extends State<_SwipeMenuRow>
+    with SingleTickerProviderStateMixin {
+  late final SlidableController _controller;
+  bool _triggered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = SlidableController(this);
+    _controller.animation.addStatusListener(_handleAnimationStatus);
+  }
+
+  void _handleAnimationStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed || _triggered) return;
+    final actionPane = _controller.actionPaneType.value;
+    if (actionPane == ActionPaneType.none) return;
+
+    _triggered = true;
+    final action = actionPane == ActionPaneType.start
+        ? widget.onStartReached
+        : widget.onEndReached;
+    action().whenComplete(() async {
+      await _controller.close();
+      if (mounted) _triggered = false;
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.animation.removeStatusListener(_handleAnimationStatus);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Slidable(
+      controller: _controller,
+      startActionPane: ActionPane(
+        motion: const ScrollMotion(),
+        extentRatio: 0.52,
+        children: [
+          SlidableAction(
+            onPressed: (_) {},
+            backgroundColor: const Color(0xFF00D86B),
+            foregroundColor: Colors.white,
+            icon: Icons.edit_outlined,
+            label: 'แก้ไข',
+            borderRadius: BorderRadius.circular(16),
+            spacing: 8,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          ),
+        ],
+      ),
+      endActionPane: ActionPane(
+        motion: const ScrollMotion(),
+        extentRatio: 0.52,
+        children: [
+          SlidableAction(
+            onPressed: (_) {},
+            backgroundColor: const Color(0xFFFF1744),
+            foregroundColor: Colors.white,
+            icon: Icons.delete_outline,
+            label: 'ลบ',
+            borderRadius: BorderRadius.circular(16),
+            spacing: 8,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          ),
+        ],
+      ),
+      child: widget.child,
+    );
+  }
+}
+
 class _MenuCard extends StatelessWidget {
   final MenuItemModel item;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
 
-  const _MenuCard({
-    required this.item,
-    required this.onEdit,
-    required this.onDelete,
-  });
+  const _MenuCard({required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -200,19 +305,6 @@ class _MenuCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          _ActionCircle(
-            icon: Icons.edit_outlined,
-            backgroundColor: const Color(0xFFFFF4E8),
-            color: const Color(0xFFF0321C),
-            onPressed: onEdit,
-          ),
-          const SizedBox(width: 8),
-          _ActionCircle(
-            icon: Icons.delete_outline,
-            backgroundColor: const Color(0xFFFFE2E2),
-            color: const Color(0xFFFF4D55),
-            onPressed: onDelete,
-          ),
         ],
       ),
     );
@@ -247,37 +339,6 @@ class _MenuImage extends StatelessWidget {
         height: 56,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) => placeholder,
-      ),
-    );
-  }
-}
-
-class _ActionCircle extends StatelessWidget {
-  final IconData icon;
-  final Color backgroundColor;
-  final Color color;
-  final VoidCallback onPressed;
-
-  const _ActionCircle({
-    required this.icon,
-    required this.backgroundColor,
-    required this.color,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: backgroundColor,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onPressed,
-        child: SizedBox(
-          width: 34,
-          height: 34,
-          child: Icon(icon, color: color, size: 20),
-        ),
       ),
     );
   }

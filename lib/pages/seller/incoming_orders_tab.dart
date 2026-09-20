@@ -13,12 +13,21 @@ class IncomingOrdersTab extends StatefulWidget {
 class _IncomingOrdersTabState extends State<IncomingOrdersTab> {
   final _searchController = TextEditingController();
   final _orderService = OrderService();
+  final _ordersScrollController = ScrollController();
+  late final Stream<List<OrderModel>> _ordersStream;
   String _search = '';
   String? _expandedOrderId;
 
   @override
+  void initState() {
+    super.initState();
+    _ordersStream = _orderService.streamAllOrders();
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
+    _ordersScrollController.dispose();
     super.dispose();
   }
 
@@ -57,7 +66,7 @@ class _IncomingOrdersTabState extends State<IncomingOrdersTab> {
           ),
           Expanded(
             child: StreamBuilder<List<OrderModel>>(
-              stream: _orderService.streamAllOrders(),
+              stream: _ordersStream,
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(
@@ -74,6 +83,8 @@ class _IncomingOrdersTabState extends State<IncomingOrdersTab> {
                   return const Center(child: Text('ไม่พบรายการออเดอร์'));
                 }
                 return ListView.separated(
+                  key: const PageStorageKey<String>('incoming-orders-list'),
+                  controller: _ordersScrollController,
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                   itemCount: orders.length,
                   separatorBuilder: (context, index) =>
