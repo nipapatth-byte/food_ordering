@@ -117,6 +117,7 @@ class _IncomingOrdersTabState extends State<IncomingOrdersTab> {
     final text = [
       order.id,
       order.customerName,
+      order.deliveryAddress,
       ...order.items.map((item) => item['name']?.toString() ?? ''),
     ].join(' ').toLowerCase();
     return text.contains(_search.toLowerCase());
@@ -171,6 +172,38 @@ class _OrderCard extends StatelessWidget {
           Text(
             customer,
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.location_on_outlined,
+                  color: Colors.white,
+                  size: 21,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    order.deliveryAddress.isEmpty
+                        ? 'ไม่พบที่อยู่จัดส่ง'
+                        : order.deliveryAddress,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.35,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 2),
           Text(

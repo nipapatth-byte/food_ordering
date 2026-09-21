@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/menu_item_model.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/menu_service.dart';
+import '../group_info_page.dart';
 import 'cart_tab.dart';
 import 'food_detail_page.dart';
 
@@ -26,8 +27,6 @@ class _HomeTabState extends State<HomeTab> {
 
   static const Color primaryRed = Color(0xFFE8391A);
   static const Color darkBg = Color(0xFF000000);
-  static const Color cardWhite = Color(0xFFFFFFFF);
-  static const Color textDark = Color(0xFF1A1A1A);
 
   static const List<String> _categories = [
     'ทั้งหมด',
@@ -75,41 +74,57 @@ class _HomeTabState extends State<HomeTab> {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // Today's Special
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
               sliver: SliverToBoxAdapter(child: _buildTodaysSpecial()),
             ),
 
-            // Category
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.only(top: 22),
+                padding: const EdgeInsets.only(top: 18),
                 child: _buildCategoryChips(),
               ),
             ),
-
-            // Popular title
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(18, 20, 18, 10),
-                child: Text(
-                  'เมนูยอดฮิต 🔥',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
             // Menu Grid
             _buildMenuGrid(),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+            const SliverToBoxAdapter(child: SizedBox(height: 96)),
           ],
         ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Consumer<CartProvider>(
+        builder: (context, cart, child) {
+          return Badge(
+            isLabelVisible: cart.itemCount > 0,
+            label: Text(
+              '${cart.itemCount}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: primaryRed,
+            offset: const Offset(1, -2),
+            child: FloatingActionButton(
+              heroTag: 'home-cart-button',
+              tooltip: 'ตะกร้า',
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF222222),
+              elevation: 5,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CartTab()),
+                );
+              },
+              child: const Icon(Icons.shopping_bag_outlined, size: 25),
+            ),
+          );
+        },
       ),
     );
   }
@@ -129,7 +144,7 @@ class _HomeTabState extends State<HomeTab> {
       title: Row(
         children: [
           Image.asset(
-            'lib/assests/images/logo.png',
+            'lib/assests/images/chef.jpg',
             width: 38,
             height: 38,
             errorBuilder: (_, __, ___) {
@@ -143,7 +158,8 @@ class _HomeTabState extends State<HomeTab> {
             'กินไรดี (Kin Rai Dee)',
             style: TextStyle(
               color: primaryRed,
-              fontSize: 20,
+              fontFamily: 'FCMinimal',
+              fontSize: 24,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -154,37 +170,11 @@ class _HomeTabState extends State<HomeTab> {
         // Profile
         _topButton(
           icon: Icons.person_outline,
-          tooltip: 'โปรไฟล์',
-          onPressed: widget.onProfileTap,
-        ),
-
-        const SizedBox(width: 8),
-
-        // Cart
-        Consumer<CartProvider>(
-          builder: (context, cart, child) {
-            return Badge(
-              isLabelVisible: cart.itemCount > 0,
-              label: Text(
-                '${cart.itemCount}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              backgroundColor: primaryRed,
-              offset: const Offset(2, -3),
-              child: _topButton(
-                icon: Icons.shopping_cart_outlined,
-                tooltip: 'ตะกร้า',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const CartTab()),
-                  );
-                },
-              ),
+          tooltip: 'เกี่ยวกับเรา',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const GroupInfoPage()),
             );
           },
         ),
@@ -254,98 +244,142 @@ class _HomeTabState extends State<HomeTab> {
 
     final item = _todaysSpecial!;
 
-    return Container(
-      height: 218,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          // Image
-          Expanded(
-            child: item.imageUrl.isEmpty
-                ? Container(
-                    width: double.infinity,
-                    color: const Color(0xFF3B2922),
-                    child: const Icon(
-                      Icons.restaurant,
-                      color: Colors.white,
-                      size: 55,
+    final subtitle = item.description.trim().isEmpty
+        ? 'หอมเครื่องแกง · รสชาติที่คิดถึง'
+        : item.description.trim();
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => FoodDetailPage(item: item)),
+        );
+      },
+      child: Container(
+        height: 218,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: const Color(0xFF15120F),
+          borderRadius: BorderRadius.circular(28),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            item.imageUrl.isEmpty
+                ? const ColoredBox(
+                    color: Color(0xFF3B2922),
+                    child: Center(
+                      child: Icon(
+                        Icons.restaurant,
+                        color: Colors.white70,
+                        size: 55,
+                      ),
                     ),
                   )
                 : Image.network(
                     item.imageUrl,
-                    width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) {
-                      return Container(
-                        color: const Color(0xFF3B2922),
-                        child: const Center(
-                          child: Icon(
-                            Icons.restaurant,
-                            color: Colors.white,
-                            size: 55,
-                          ),
+                    errorBuilder: (_, __, ___) => const ColoredBox(
+                      color: Color(0xFF3B2922),
+                      child: Center(
+                        child: Icon(
+                          Icons.restaurant,
+                          color: Colors.white70,
+                          size: 55,
                         ),
-                      );
-                    },
-                  ),
-          ),
-
-          // Bottom information
-          Container(
-            height: 58,
-            padding: const EdgeInsets.fromLTRB(16, 8, 14, 8),
-            color: Colors.white,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: primaryRed,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [Color(0xD915120F), Color(0x3015120F)],
                 ),
-
-                Text(
-                  '${item.price.toStringAsFixed(0)} บาท',
-                  style: const TextStyle(
-                    color: primaryRed,
-                    fontSize: 14,
+              ),
+            ),
+            Positioned(
+              left: 22,
+              top: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFB300),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'เมนูแนะนำวันนี้',
+                  style: TextStyle(
+                    color: Color(0xFF24170E),
+                    fontSize: 12,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => FoodDetailPage(item: item),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    width: 34,
-                    height: 34,
-                    decoration: const BoxDecoration(
-                      color: primaryRed,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.add, color: Colors.white, size: 22),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+            Positioned(
+              left: 22,
+              right: 16,
+              bottom: 22,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFFF9EDE5),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 13,
+                      vertical: 11,
+                    ),
+                    decoration: BoxDecoration(
+                      color: primaryRed,
+                      borderRadius: BorderRadius.circular(17),
+                    ),
+                    child: Text(
+                      '${item.price.toStringAsFixed(0)} บาท',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -356,9 +390,9 @@ class _HomeTabState extends State<HomeTab> {
 
   Widget _buildCategoryChips() {
     return SizedBox(
-      height: 42,
+      height: 40,
       child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         itemCount: _categories.length,
@@ -377,19 +411,43 @@ class _HomeTabState extends State<HomeTab> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 17),
+              padding: EdgeInsets.symmetric(
+                horizontal: selected ? 16 : 14,
+                vertical: 9,
+              ),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: selected ? primaryRed : const Color(0xFFF7F7F7),
+                color: selected ? primaryRed : const Color(0xFF1A1A1A),
                 borderRadius: BorderRadius.circular(22),
-              ),
-              child: Text(
-                category,
-                style: TextStyle(
-                  color: selected ? Colors.white : const Color(0xFF555555),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+                border: Border.all(
+                  color: selected ? primaryRed : const Color(0xFF333333),
                 ),
+                boxShadow: selected
+                    ? [
+                        BoxShadow(
+                          color: primaryRed.withValues(alpha: 0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (selected) ...[
+                    const Icon(Icons.check, color: Colors.white, size: 15),
+                    const SizedBox(width: 4),
+                  ],
+                  Text(
+                    category,
+                    style: TextStyle(
+                      color: selected ? Colors.white : Colors.white70,
+                      fontSize: 14,
+                      fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
           );

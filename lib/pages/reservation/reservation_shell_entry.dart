@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/cart_provider.dart';
 import '../customer/cart_tab.dart';
 import '../group_info_page.dart';
 import 'my_reservations_page.dart';
@@ -33,17 +35,7 @@ class _ReservationShellEntryState extends State<ReservationShellEntry> {
               MaterialPageRoute(builder: (_) => const GroupInfoPage()),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: _HeaderIcon(
-              icon: Icons.shopping_cart_outlined,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CartTab()),
-              ),
-              badge: '3',
-            ),
-          ),
+          const SizedBox(width: 12),
         ],
       ),
       body: Column(
@@ -64,6 +56,38 @@ class _ReservationShellEntryState extends State<ReservationShellEntry> {
           ),
         ],
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Consumer<CartProvider>(
+        builder: (context, cart, child) {
+          return Badge(
+            isLabelVisible: cart.itemCount > 0,
+            label: Text(
+              '${cart.itemCount}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: const Color(0xFFE8391A),
+            offset: const Offset(1, -2),
+            child: FloatingActionButton(
+              heroTag: 'home-cart-button',
+              tooltip: 'ตะกร้า',
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF222222),
+              elevation: 5,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CartTab()),
+                );
+              },
+              child: const Icon(Icons.shopping_bag_outlined, size: 25),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -71,45 +95,20 @@ class _ReservationShellEntryState extends State<ReservationShellEntry> {
 class _HeaderIcon extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  final String? badge;
 
-  const _HeaderIcon({required this.icon, required this.onTap, this.badge});
+  const _HeaderIcon({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        IconButton(
-          onPressed: onTap,
-          style: IconButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            padding: const EdgeInsets.all(10),
-          ),
-          icon: Icon(icon, size: 25),
-        ),
-        if (badge != null)
-          Positioned(
-            right: 0,
-            top: 0,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: Color(0xFFE8391A),
-                shape: BoxShape.circle,
-              ),
-              child: Text(
-                badge!,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 9,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-      ],
+    return IconButton(
+      onPressed: onTap,
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        padding: const EdgeInsets.all(12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      icon: Icon(icon, size: 20),
     );
   }
 }

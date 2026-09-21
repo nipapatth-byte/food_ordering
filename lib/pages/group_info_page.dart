@@ -20,36 +20,203 @@ class GroupInfoPage extends StatelessWidget {
   const GroupInfoPage({super.key});
 
   static const members = [
-    ('สมาชิกกลุ่ม 1', 'ผู้ดูแลระบบ', 'lib/assests/images/meaw.jpg'),
-    ('สมาชิกกลุ่ม 2', 'นักพัฒนาแอป', 'lib/assests/images/meaw1.jpg'),
+    (
+      'นางสาวนิภาภัทร์ ธรรมสิริ',
+      'รหัสนิสิต: 6721602474',
+      'lib/assests/images/meaw.jpg',
+    ),
+    (
+      'นายรภีพัส เพชรทอง',
+      'รหัสนิสิต: 6721602571',
+      'lib/assests/images/meaw1.jpg',
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('ข้อมูลผู้พัฒนา')),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: members.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 10),
-        itemBuilder: (context, index) {
-          final member = members[index];
-          return Card(
-            clipBehavior: Clip.antiAlias,
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(12),
-              leading: CircleAvatar(
-                radius: 30,
-                backgroundImage: AssetImage(member.$3),
-              ),
-              title: Text(
-                member.$1,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(member.$2),
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
+          children: [
+            Row(
+              children: [
+                _BackButton(onPressed: () => Navigator.pop(context)),
+                const SizedBox(width: 14),
+                const Text(
+                  'เกี่ยวกับแอป',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
             ),
-          );
-        },
+            const SizedBox(height: 30),
+            Center(
+              child: ClipOval(
+                child: Image.asset(
+                  'lib/assests/images/kinraidee.png',
+                  width: 186,
+                  height: 186,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            const Center(
+              child: Text(
+                'กินไรดี (Kin Rai Dee)',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 23,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Center(
+              child: Text(
+                'แอปจัดการร้านอาหาร',
+                style: TextStyle(color: Colors.white, fontSize: 14),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'สมาชิก',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...members.map(
+              (member) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _MemberCard(member: member),
+              ),
+            ),
+            const SizedBox(height: 30),
+            const Text(
+              'เทคโนโลยีที่ใช้',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 9,
+              children: const [
+                _TechnologyChip('Flutter'),
+                _TechnologyChip('Firebase Firestore'),
+                _TechnologyChip('TheMealDB API'),
+                _TechnologyChip('Figma Design System'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BackButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _BackButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(13),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(13),
+        child: const SizedBox(
+          width: 34,
+          height: 34,
+          child: Icon(Icons.chevron_left, color: Colors.black, size: 25),
+        ),
+      ),
+    );
+  }
+}
+
+class _MemberCard extends StatelessWidget {
+  final (String, String, String) member;
+
+  const _MemberCard({required this.member});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(17),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(radius: 23, backgroundImage: AssetImage(member.$3)),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  member.$1,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF241B18),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  member.$2,
+                  style: const TextStyle(
+                    color: Color(0xFF8C7D77),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TechnologyChip extends StatelessWidget {
+  final String label;
+
+  const _TechnologyChip(this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFF302723),
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 import 'incoming_orders_tab.dart';
 import 'manage_menu_tab.dart';
 import 'manage_tables_tab.dart';
 import 'sales_report_tab.dart';
 import '../customer/profile_tab.dart'; // ใช้ตัวเดิมได้เลย เพราะมันเช็ค role/logout ในตัวอยู่แล้ว
-import '../../widgets/app_bottom_nav.dart';
 
 class SellerShell extends StatefulWidget {
   const SellerShell({super.key});
@@ -28,36 +28,29 @@ class _SellerShellState extends State<SellerShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _index, children: _pages),
-      bottomNavigationBar: AppBottomNav(
-        currentIndex: _index,
-        onTap: (i) => setState(() => _index = i),
-        items: const [
-          AppBottomNavItem(
-            icon: Icons.receipt_outlined,
-            selectedIcon: Icons.receipt,
-            label: 'Order',
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          color: Colors.black,
+          padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+          child: GNav(
+            backgroundColor: Colors.black,
+            color: Colors.white70,
+            activeColor: Colors.white,
+            tabBackgroundColor: const Color(0xFFE6391A),
+            gap: 4,
+            padding: const EdgeInsets.all(11),
+            selectedIndex: _index,
+            onTabChange: (index) => setState(() => _index = index),
+            tabs: const [
+              GButton(icon: Icons.receipt_outlined, text: 'Order'),
+              GButton(icon: Icons.restaurant_menu_outlined, text: 'Menu'),
+              GButton(icon: Icons.table_bar_outlined, text: 'Tables'),
+              GButton(icon: Icons.bar_chart_outlined, text: 'Report'),
+              GButton(icon: Icons.person_outline, text: 'Profile'),
+            ],
           ),
-          AppBottomNavItem(
-            icon: Icons.restaurant_menu_outlined,
-            selectedIcon: Icons.restaurant_menu,
-            label: 'Menu',
-          ),
-          AppBottomNavItem(
-            icon: Icons.table_bar_outlined,
-            selectedIcon: Icons.table_bar,
-            label: 'Tables',
-          ),
-          AppBottomNavItem(
-            icon: Icons.bar_chart_outlined,
-            selectedIcon: Icons.bar_chart,
-            label: 'Report',
-          ),
-          AppBottomNavItem(
-            icon: Icons.person_outline,
-            selectedIcon: Icons.person,
-            label: 'Profile',
-          ),
-        ],
+        ),
       ),
     );
   }

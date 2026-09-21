@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 import 'home_tab.dart';
 import 'order_history_tab.dart';
 import 'profile_tab.dart';
 import '../reservation/reservation_shell_entry.dart';
-import '../../widgets/app_bottom_nav.dart';
 
 class CustomerShell extends StatefulWidget {
   const CustomerShell({super.key});
@@ -28,31 +28,28 @@ class _CustomerShellState extends State<CustomerShell> {
       // IndexedStack กันไม่ให้แต่ละหน้า rebuild ใหม่ทุกครั้งที่สลับ tab
       // ทำให้ state ของตะกร้า/scroll position ไม่หายตอนสลับไปมา
       body: IndexedStack(index: _index, children: _pages),
-      bottomNavigationBar: AppBottomNav(
-        currentIndex: _index,
-        onTap: (i) => setState(() => _index = i),
-        items: const [
-          AppBottomNavItem(
-            icon: Icons.home_outlined,
-            selectedIcon: Icons.home,
-            label: 'หน้าแรก',
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          color: Colors.black,
+          padding: const EdgeInsets.fromLTRB(15, 10, 15, 10),
+          child: GNav(
+            backgroundColor: Colors.black,
+            color: Colors.white70,
+            activeColor: Colors.white,
+            tabBackgroundColor: const Color(0xFFE6391A),
+            gap: 6,
+            padding: const EdgeInsets.all(12),
+            selectedIndex: _index,
+            onTabChange: (index) => setState(() => _index = index),
+            tabs: const [
+              GButton(icon: Icons.home_outlined, text: 'หน้าแรก'),
+              GButton(icon: Icons.receipt_long_outlined, text: 'คำสั่งซื้อ'),
+              GButton(icon: Icons.table_restaurant_outlined, text: 'จองโต๊ะ'),
+              GButton(icon: Icons.person_outline, text: 'โปรไฟล์'),
+            ],
           ),
-          AppBottomNavItem(
-            icon: Icons.receipt_long_outlined,
-            selectedIcon: Icons.receipt_long,
-            label: 'คำสั่งซื้อ',
-          ),
-          AppBottomNavItem(
-            icon: Icons.table_restaurant_outlined,
-            selectedIcon: Icons.table_restaurant,
-            label: 'จองโต๊ะ',
-          ),
-          AppBottomNavItem(
-            icon: Icons.person_outline,
-            selectedIcon: Icons.person,
-            label: 'โปรไฟล์',
-          ),
-        ],
+        ),
       ),
     );
   }

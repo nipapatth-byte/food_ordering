@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/table_model.dart';
+import '../../models/reservation_model.dart';
 import '../../services/reservation_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/reservation_provider.dart';
@@ -18,7 +19,7 @@ class _TableLayoutPageState extends State<TableLayoutPage> {
   TableModel? _selectedTable;
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedStartTime = const TimeOfDay(hour: 18, minute: 0);
-  TimeOfDay _selectedEndTime = const TimeOfDay(hour: 19, minute: 0);
+  TimeOfDay _selectedEndTime = const TimeOfDay(hour: 20, minute: 0);
 
   @override
   void dispose() {
@@ -57,36 +58,64 @@ class _TableLayoutPageState extends State<TableLayoutPage> {
           _selectedTable = null;
         }
 
-        return Column(
-          children: [
-            _buildFilters(),
-            Expanded(
-              child: GridView.builder(
-                key: const PageStorageKey<String>('customer-table-grid'),
-                controller: _tableScrollController,
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
-                itemCount: tables.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 26,
-                  mainAxisSpacing: 14,
-                  childAspectRatio: .88,
+        return StreamBuilder<List<ReservationModel>>(
+          stream: _reservationService.streamReservations(),
+          builder: (context, reservationsSnapshot) {
+            if (reservationsSnapshot.hasError) {
+              return Center(
+                child: Text(
+                  'โหลดข้อมูลการจองไม่สำเร็จ: ${reservationsSnapshot.error}',
+                  style: const TextStyle(color: Colors.white),
                 ),
-                itemBuilder: (context, index) {
-                  final table = tables[index];
-                  final available = table.status == 'available';
-                  final selected = _selectedTable?.id == table.id;
-                  return _TableCard(
-                    table: table,
-                    available: available,
-                    selected: selected,
-                    onTap: available ? () => _selectTable(table) : null,
-                  );
-                },
-              ),
-            ),
-            _buildFooter(auth.user?.uid),
-          ],
+              );
+            }
+            final reservations = reservationsSnapshot.data ?? [];
+            return Column(
+              children: [
+                _buildFilters(),
+                Expanded(
+                  child: GridView.builder(
+                    key: const PageStorageKey<String>('customer-table-grid'),
+                    controller: _tableScrollController,
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+                    itemCount: tables.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 26,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: .88,
+                        ),
+                    itemBuilder: (context, index) {
+                      final table = tables[index];
+                      final occupied = table.status == 'occupied';
+                      final available =
+                          !occupied &&
+                          !reservations.any(
+                            (reservation) =>
+                                reservation.tableId == table.id &&
+                                _reservationService.reservationOverlaps(
+                                  reservation: reservation,
+                                  date: _selectedDate,
+                                  timeRange:
+                                      '${_formatTime(_selectedStartTime)}-${_formatTime(_selectedEndTime)}',
+                                ),
+                          );
+                      final selected = _selectedTable?.id == table.id;
+                      return _TableCard(
+                        table: table,
+                        available: available,
+                        occupied: occupied,
+                        selected: selected,
+                        onTap: available ? () => _selectTable(table) : null,
+                      );
+                    },
+                  ),
+                ),
+                _buildFooter(auth.user?.uid),
+              ],
+            );
+          },
         );
       },
     );
@@ -177,10 +206,19 @@ class _TableLayoutPageState extends State<TableLayoutPage> {
       ),
     );
     if (picked == null || !mounted) return;
-    final endMinutes = picked.hour * 60 + picked.minute + 60;
-    if (endMinutes >= 24 * 60) {
+    final startMinutes = picked.hour * 60 + picked.minute;
+    final endMinutes =
+        startMinutes + ReservationService.reservationDurationMinutes;
+    if (picked.minute != 0 ||
+        startMinutes < ReservationService.openingMinutes ||
+        endMinutes > ReservationService.closingMinutes) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาเลือกเวลาเริ่มก่อน 23.00 น.')),
+        const SnackBar(
+          content: Text(
+            'เลือกเวลาเริ่มเป็นชั่วโมงเต็ม ระหว่าง 09.00-19.00 น. '
+            '(รอบละ 2 ชั่วโมง)',
+          ),
+        ),
       );
       return;
     }
@@ -367,12 +405,14 @@ class _FilterBox extends StatelessWidget {
 class _TableCard extends StatelessWidget {
   final TableModel table;
   final bool available;
+  final bool occupied;
   final bool selected;
   final VoidCallback? onTap;
 
   const _TableCard({
     required this.table,
     required this.available,
+    required this.occupied,
     required this.selected,
     required this.onTap,
   });
@@ -422,9 +462,9 @@ class _TableCard extends StatelessWidget {
               child: Text(
                 selected
                     ? 'กำลังเลือก'
-                    : table.status == 'occupied'
+                    : occupied
                     ? 'กำลังใช้งาน'
-                    : table.status == 'reserved'
+                    : !available
                     ? 'จองแล้ว'
                     : 'ว่าง',
                 style: TextStyle(

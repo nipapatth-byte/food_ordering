@@ -8,58 +8,49 @@ class SplashPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFCEFDC),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'lib/assests/images/logo.png',
-              width: 130,
-              height: 130,
-              errorBuilder: (_, error, stackTrace) => const Icon(
-                Icons.ramen_dining,
+      backgroundColor: const Color(0xFFFFF8E9),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            'lib/assests/images/page1.png',
+            fit: BoxFit.cover,
+            errorBuilder: (_, error, stackTrace) => const ColoredBox(
+              color: Color(0xFFFFF8E9),
+              child: Icon(
+                Icons.restaurant,
                 size: 100,
                 color: Color(0xFFE8481C),
               ),
             ),
-            const SizedBox(height: 18),
-            const Text(
-              'กินไรดี',
-              style: TextStyle(
-                fontSize: 34,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFFE8481C),
-              ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 42,
+            child: Column(
+              children: const [
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 4,
+                    color: Color(0xFFE6391A),
+                  ),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'กำลังโหลดความอร่อย...',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFE6391A),
+                  ),
+                ),
+              ],
             ),
-            const Text(
-              'Kin Rai Dee',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFFE8481C),
-              ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'อร่อยง่าย ได้ทุกวัน',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF8A5A3A),
-              ),
-            ),
-            const SizedBox(height: 36),
-            const SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                color: Color(0xFFE8481C),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

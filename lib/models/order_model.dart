@@ -4,7 +4,9 @@ class OrderModel {
   final List<Map<String, dynamic>> items; // [{menuId, name, qty, priceAtOrder}]
   final String status; // pending | cooking | ready | done
   final double totalPrice;
+  final double deliveryFee;
   final String customerName;
+  final String deliveryAddress;
   final DateTime? createdAt;
 
   OrderModel({
@@ -14,6 +16,8 @@ class OrderModel {
     required this.status,
     required this.totalPrice,
     this.customerName = '',
+    this.deliveryFee = 0,
+    this.deliveryAddress = '',
     this.createdAt,
   });
 
@@ -24,7 +28,9 @@ class OrderModel {
       items: List<Map<String, dynamic>>.from(map['items'] ?? []),
       status: map['status'] ?? 'pending',
       totalPrice: (map['totalPrice'] ?? 0).toDouble(),
+      deliveryFee: (map['deliveryFee'] ?? 0).toDouble(),
       customerName: map['customerName']?.toString() ?? '',
+      deliveryAddress: map['deliveryAddress']?.toString() ?? '',
       createdAt: map['createdAt']?.toDate(),
     );
   }

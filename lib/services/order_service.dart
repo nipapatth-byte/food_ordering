@@ -9,21 +9,26 @@ class OrderService {
   Future<String> createOrder({
     required String userId,
     required List<CartItemModel> cartItems,
+    required String deliveryAddress,
+    required double deliveryFee,
   }) async {
     final userSnapshot = await _db.collection('users').doc(userId).get();
     final userData = userSnapshot.data() ?? <String, dynamic>{};
     final customerName = userData['displayName']?.toString().trim() ?? '';
-    final total = cartItems.fold<double>(
+    final subtotal = cartItems.fold<double>(
       0,
       (total, item) => total + item.subtotal,
     );
+    final total = subtotal + deliveryFee;
 
     final docRef = await _db.collection('orders').add({
       'userId': userId,
       'customerName': customerName,
+      'deliveryAddress': deliveryAddress,
       'items': cartItems.map((c) => c.toOrderItemMap()).toList(),
       'status': 'pending',
       'totalPrice': total,
+      'deliveryFee': deliveryFee,
       'createdAt': FieldValue.serverTimestamp(),
     });
     return docRef.id;

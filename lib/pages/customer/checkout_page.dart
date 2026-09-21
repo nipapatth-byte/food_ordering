@@ -19,16 +19,25 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final auth = context.read<AuthProvider>();
     final cart = context.read<CartProvider>();
     if (!auth.isLoggedIn) return;
+    final address = auth.profile['address']?.toString().trim() ?? '';
+    if (address.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('กรุณาเพิ่มที่อยู่จัดส่งในหน้าโปรไฟล์ก่อนสั่งซื้อ'),
+        ),
+      );
+      return;
+    }
     if (_payment == 'promptpay') {
       await Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => PaymentPage(amount: cart.totalPrice)),
+        MaterialPageRoute(builder: (_) => PaymentPage(amount: cart.grandTotal)),
       );
       return;
     }
     setState(() => _submitting = true);
     try {
-      await cart.checkout(auth.user!.uid);
+      await cart.checkout(auth.user!.uid, deliveryAddress: address);
       if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
     } catch (error) {
       if (mounted) {
@@ -47,35 +56,58 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final address = auth.profile['address']?.toString().trim();
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(title: const Text('ยืนยันคำสั่งซื้อ')),
+      appBar: AppBar(
+        automaticallyImplyLeading: true,
+        title: const Text(
+          'ยืนยันคำสั่งซื้อ',
+          style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+        ),
+      ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 10, 24, 120),
+        padding: const EdgeInsets.fromLTRB(28, 8, 28, 120),
         children: [
           _Section(
             title: 'สถานที่จัดส่ง',
+            icon: Icons.location_on_outlined,
             child: Text(
               address == null || address.isEmpty
                   ? 'ยังไม่ได้ระบุที่อยู่จัดส่ง กรุณาเพิ่มข้อมูลในโปรไฟล์'
                   : address,
-              style: const TextStyle(height: 1.4),
+              style: const TextStyle(
+                color: Color(0xFF292321),
+                fontSize: 13,
+                height: 1.45,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           _Section(
             title: 'รายการอาหาร',
+            icon: Icons.receipt_long_outlined,
             child: Column(
               children: cart.items
                   .map(
                     (item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.only(bottom: 12),
                       child: Row(
                         children: [
                           Expanded(
                             child: Text(
                               '${item.menuItem.name} x${item.quantity}',
+                              style: const TextStyle(
+                                color: Color(0xFF292321),
+                                fontSize: 13,
+                              ),
                             ),
                           ),
-                          Text('${item.subtotal.toStringAsFixed(0)} บาท'),
+                          Text(
+                            item.subtotal.toStringAsFixed(0),
+                            style: const TextStyle(
+                              color: Color(0xFF171313),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -83,9 +115,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   .toList(),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
+          _TotalSection(cart: cart),
+          const SizedBox(height: 18),
           _Section(
             title: 'เลือกวิธีการชำระเงิน',
+            icon: Icons.payments_outlined,
             child: Column(
               children: [
                 _PaymentChoice(
@@ -108,17 +143,20 @@ class _CheckoutPageState extends State<CheckoutPage> {
         ],
       ),
       bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.all(20),
+        minimum: const EdgeInsets.fromLTRB(26, 10, 26, 18),
         child: SizedBox(
-          height: 52,
+          height: 50,
           child: ElevatedButton(
             onPressed: _submitting ? null : _submit,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFF0321C),
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
             child: Text(
-              'ยืนยันการสั่งซื้อ  •  ${cart.totalPrice.toStringAsFixed(0)} บาท',
+              'ยืนยันการสั่งซื้อ  •  ${cart.grandTotal.toStringAsFixed(0)}',
               style: const TextStyle(fontWeight: FontWeight.w900),
             ),
           ),
@@ -128,22 +166,101 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 }
 
+class _TotalSection extends StatelessWidget {
+  final CartProvider cart;
+
+  const _TotalSection({required this.cart});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          _PriceRow(label: 'ราคาอาหารรวม', value: cart.totalPrice),
+          const SizedBox(height: 8),
+          _PriceRow(label: 'ค่าส่งอาหาร', value: CartProvider.deliveryFee),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: Divider(color: Color(0xFFE0E0E0)),
+          ),
+          _PriceRow(
+            label: 'ยอดสุทธิรวมค่าส่ง',
+            value: cart.grandTotal,
+            emphasized: true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PriceRow extends StatelessWidget {
+  final String label;
+  final double value;
+  final bool emphasized;
+
+  const _PriceRow({
+    required this.label,
+    required this.value,
+    this.emphasized = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextStyle(
+      color: emphasized ? const Color(0xFF171313) : const Color(0xFF292321),
+      fontSize: emphasized ? 14 : 13,
+      fontWeight: emphasized ? FontWeight.w900 : FontWeight.w600,
+    );
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: style),
+        Text(value.toStringAsFixed(0), style: style),
+      ],
+    );
+  }
+}
+
 class _Section extends StatelessWidget {
   final String title;
+  final IconData icon;
   final Widget child;
-  const _Section({required this.title, required this.child});
+  const _Section({
+    required this.title,
+    required this.icon,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: const Color(0xFFF0321C),
+      color: Colors.white,
       borderRadius: BorderRadius.circular(16),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+        Row(
+          children: [
+            Icon(icon, color: const Color(0xFF292321), size: 18),
+            const SizedBox(width: 7),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Color(0xFF171313),
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 12),
         child,
       ],
@@ -171,16 +288,25 @@ class _PaymentChoice extends StatelessWidget {
     onTap: () => onChanged(value),
     child: Row(
       children: [
-        Icon(icon, color: Colors.white),
+        Icon(icon, color: const Color(0xFF292321), size: 19),
         const SizedBox(width: 12),
-        Expanded(child: Text(title)),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              color: Color(0xFF292321),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
         Radio<String>(
           value: value,
           groupValue: groupValue,
           onChanged: (value) {
             if (value != null) onChanged(value);
           },
-          activeColor: Colors.white,
+          activeColor: Colors.black,
         ),
       ],
     ),

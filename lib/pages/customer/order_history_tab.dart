@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../models/order_model.dart';
 import '../../services/order_service.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/cart_provider.dart';
 import '../group_info_page.dart';
 import 'cart_tab.dart';
 import 'order_tracking_page.dart';
@@ -19,22 +20,24 @@ class OrderHistoryTab extends StatelessWidget {
       appBar: AppBar(
         title: const Text('คำสั่งซื้อของฉัน'),
         actions: [
-          IconButton(
-            tooltip: 'ข้อมูลผู้พัฒนา',
+          IconButton.filled(
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             icon: const Icon(Icons.person_outline),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const GroupInfoPage()),
-            ),
+            tooltip: 'เกี่ยวกับเรา',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const GroupInfoPage()),
+              );
+            },
           ),
-          IconButton(
-            tooltip: 'ตะกร้า',
-            icon: const Icon(Icons.shopping_cart_outlined),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CartTab()),
-            ),
-          ),
+          const SizedBox(width: 12),
         ],
       ),
       body: userId == null
@@ -81,7 +84,7 @@ class OrderHistoryTab extends StatelessWidget {
                   );
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
                   itemCount: orders.length,
                   itemBuilder: (context, index) {
                     final order = orders[index];
@@ -101,6 +104,38 @@ class OrderHistoryTab extends StatelessWidget {
                 );
               },
             ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Consumer<CartProvider>(
+        builder: (context, cart, child) {
+          return Badge(
+            isLabelVisible: cart.itemCount > 0,
+            label: Text(
+              '${cart.itemCount}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: const Color(0xFFE8391A),
+            offset: const Offset(1, -2),
+            child: FloatingActionButton(
+              heroTag: 'home-cart-button',
+              tooltip: 'ตะกร้า',
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF222222),
+              elevation: 5,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CartTab()),
+                );
+              },
+              child: const Icon(Icons.shopping_bag_outlined, size: 25),
+            ),
+          );
+        },
+      ),
     );
   }
 }

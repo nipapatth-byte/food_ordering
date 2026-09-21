@@ -19,7 +19,11 @@ class _PaymentPageState extends State<PaymentPage> {
     final cart = context.read<CartProvider>();
     setState(() => _submitting = true);
     try {
-      await cart.checkout(auth.user!.uid);
+      final address = auth.profile['address']?.toString().trim() ?? '';
+      if (address.isEmpty) {
+        throw StateError('ไม่พบที่อยู่จัดส่ง');
+      }
+      await cart.checkout(auth.user!.uid, deliveryAddress: address);
       if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
     } catch (error) {
       if (mounted) {
@@ -52,7 +56,7 @@ class _PaymentPageState extends State<PaymentPage> {
           const SizedBox(height: 18),
           Center(
             child: Text(
-              'ทั้งหมด: ${widget.amount.toStringAsFixed(0)} บาท',
+              'ยอดชำระทั้งหมด: ${widget.amount.toStringAsFixed(0)} บาท',
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
             ),
           ),

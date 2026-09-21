@@ -73,7 +73,7 @@ class _ProfileTabState extends State<ProfileTab> {
         const SizedBox(height: 30),
         const Center(
           child: _ProfileAvatar(
-            image: 'lib/assests/images/meaw1.jpg',
+            image: 'lib/assests/images/peple.jpg',
             size: 102,
           ),
         ),

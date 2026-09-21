@@ -30,6 +30,11 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> _onAuthChanged(User? user) async {
+    _initialized = false;
+    _role = null;
+    _profile = <String, dynamic>{};
+    notifyListeners();
+
     _user = user;
     if (user != null) {
       _role = await _authService.fetchUserRole(user.uid);
@@ -44,9 +49,15 @@ class AuthProvider extends ChangeNotifier {
 
   Future<String?> login(String email, String password) async {
     _isLoading = true;
+    _initialized = false;
+    _role = null;
+    _profile = <String, dynamic>{};
     notifyListeners();
     final error = await _authService.login(email, password);
     _isLoading = false;
+    if (error != null && _user == null) {
+      _initialized = true;
+    }
     notifyListeners();
     return error;
   }
