@@ -177,28 +177,3 @@ class _MemberCard extends StatelessWidget {
     );
   }
 }
-
-class _TechnologyChip extends StatelessWidget {
-  final String label;
-
-  const _TechnologyChip(this.label);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Color(0xFF302723),
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
