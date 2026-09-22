@@ -376,11 +376,11 @@ class _ProfileTabState extends State<ProfileTab> {
     if (mounted) setState(() => _errorText = error);
   }
 
-  void _showMessage(String message) {
+  /*void _showMessage(String message) {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
-  }
+  }*/
 }
 
 class _ProfileBrand extends StatelessWidget {
