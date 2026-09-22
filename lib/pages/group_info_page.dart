@@ -23,12 +23,12 @@ class GroupInfoPage extends StatelessWidget {
     (
       'นางสาวนิภาภัทร์ ธรรมสิริ',
       'รหัสนิสิต: 6721602474',
-      'lib/assests/images/meaw.jpg',
+      'lib/assests/images/profile.jpeg',
     ),
     (
       'นายรภีพัส เพชรทอง',
       'รหัสนิสิต: 6721602571',
-      'lib/assests/images/meaw1.jpg',
+      'lib/assests/images/profile1.jpg',
     ),
   ];
 
@@ -100,25 +100,6 @@ class GroupInfoPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 30),
-            const Text(
-              'เทคโนโลยีที่ใช้',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 9,
-              children: const [
-                _TechnologyChip('Flutter'),
-                _TechnologyChip('Firebase Firestore'),
-                _TechnologyChip('TheMealDB API'),
-                _TechnologyChip('Figma Design System'),
-              ],
-            ),
           ],
         ),
       ),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import 'payment_page.dart';
+import 'order_success_splash_page.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -25,8 +26,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Future<void> _submit() async {
     final auth = context.read<AuthProvider>();
     final cart = context.read<CartProvider>();
+
     if (!auth.isLoggedIn) return;
+
     final address = auth.profile['address']?.toString().trim() ?? '';
+
     if (address.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -35,14 +39,22 @@ class _CheckoutPageState extends State<CheckoutPage> {
       );
       return;
     }
+
     if (_payment == 'promptpay') {
       await Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => PaymentPage(amount: cart.grandTotal)),
+        MaterialPageRoute(
+          builder: (_) => PaymentPage(
+            amount: cart.grandTotal,
+            notes: _notesController.text.trim(),
+          ),
+        ),
       );
       return;
     }
+
     setState(() => _submitting = true);
+
     try {
       await cart.checkout(
         auth.user!.uid,
@@ -50,10 +62,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
         paymentMethod: _payment,
         notes: _notesController.text.trim(),
       );
-      if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const OrderSuccessSplashPage()),
+        );
+      }
     } catch (error) {
       if (mounted) {
         setState(() => _submitting = false);
+
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('สั่งซื้อไม่สำเร็จ: $error')));

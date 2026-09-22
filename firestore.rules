@@ -66,7 +66,22 @@ service cloud.firestore {
         && request.resource.data.source == 'external'
         && request.resource.data.price == 0
         && request.resource.data.externalId is string
-        && request.resource.data.externalId != '';
+        && request.resource.data.externalId != ''
+        && request.resource.data.dailyDate == get(
+          /databases/$(database)/documents/app_settings/daily_special
+        ).data.date;
+
+      // ลูกค้าไม่มีปุ่มลบเมนู
+      // แต่ระบบสามารถลบเมนู API ของวันเก่าอัตโนมัติได้
+      // dailyDate ว่าง = เมนูเก่าจากระบบเวอร์ชันก่อนหน้า
+      allow delete: if signedIn()
+        && resource.data.source == 'external'
+        && (
+          !resource.data.keys().hasAll(['dailyDate'])
+          || resource.data.dailyDate != get(
+            /databases/$(database)/documents/app_settings/daily_special
+          ).data.date
+        );
     }
 
 

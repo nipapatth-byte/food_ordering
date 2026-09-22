@@ -7,6 +7,7 @@ class MenuItemModel {
   final String description;
   final String externalId;
   final String source;
+  final String dailyDate;
 
   MenuItemModel({
     required this.id,
@@ -17,6 +18,7 @@ class MenuItemModel {
     required this.description,
     this.externalId = '',
     this.source = 'local',
+    this.dailyDate = '',
   });
 
   factory MenuItemModel.fromMap(String id, Map<String, dynamic> map) {
@@ -29,6 +31,7 @@ class MenuItemModel {
       description: map['description'] ?? '',
       externalId: map['externalId'] ?? '',
       source: map['source'] ?? 'local',
+      dailyDate: map['dailyDate'] ?? '',
     );
   }
 
@@ -41,6 +44,7 @@ class MenuItemModel {
       'description': description,
       'externalId': externalId,
       'source': source,
+      'dailyDate': dailyDate,
     };
   }
 }

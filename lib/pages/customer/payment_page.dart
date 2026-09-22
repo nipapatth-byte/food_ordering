@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
+import 'order_success_splash_page.dart';
 
 class PaymentPage extends StatefulWidget {
   final double amount;
-  const PaymentPage({super.key, required this.amount});
+  final String notes;
+
+  const PaymentPage({super.key, required this.amount, this.notes = ''});
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();
@@ -27,8 +30,14 @@ class _PaymentPageState extends State<PaymentPage> {
         auth.user!.uid,
         deliveryAddress: address,
         paymentMethod: 'promptpay',
+        notes: widget.notes,
       );
-      if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const OrderSuccessSplashPage()),
+        );
+      }
     } catch (error) {
       if (mounted) {
         setState(() => _submitting = false);

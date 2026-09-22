@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../group_info_page.dart';
 
 // หน้านี้ทำหน้าที่ 2 อย่าง:
 // - ยังไม่ login -> โชว์ฟอร์ม login/register (เลือก role ตอน register)
@@ -389,26 +390,38 @@ class _ProfileBrand extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Image.asset('lib/assests/images/logo.png', width: 34, height: 34),
-        const SizedBox(width: 10),
-        const Text(
-          'โปรไฟล์',
-          style: TextStyle(
-            color: Color(0xFFFF4D26),
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-          ),
+        Row(
+          children: [
+            Image.asset('lib/assests/images/chef.jpg', width: 34, height: 34),
+            const SizedBox(width: 10),
+            const Text(
+              'โปรไฟล์',
+              style: TextStyle(
+                color: Color(0xFFFF4D26),
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
         ),
-        const Spacer(),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(13),
+        IconButton.filled(
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
-          child: const Icon(Icons.person_outline, color: Colors.black),
+          icon: const Icon(Icons.person_outline),
+          tooltip: 'เกี่ยวกับเรา',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const GroupInfoPage()),
+            );
+          },
         ),
       ],
     );
