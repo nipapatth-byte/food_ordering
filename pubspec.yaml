@@ -42,10 +42,16 @@ dependencies:
   file_picker: ^8.0.7
   flutter_slidable: ^4.0.3
   google_nav_bar: ^5.0.7
+  flutter_launcher_icons: ^0.14.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "lib/assests/images/kinraidee.png"
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

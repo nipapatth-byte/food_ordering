@@ -43,6 +43,12 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   Future<void> _loadTodaysSpecial() async {
+    if (mounted) {
+      setState(() {
+        _loadingSpecial = true;
+      });
+    }
+
     try {
       final special = await _menuService.fetchDailySpecial();
 

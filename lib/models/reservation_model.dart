@@ -8,6 +8,8 @@ class ReservationModel {
   final DateTime? reservedAt;
   final DateTime? reservationDate;
   final String? reservationTime;
+  final String customerName;
+  final String customerPhone;
 
   ReservationModel({
     required this.id,
@@ -19,6 +21,8 @@ class ReservationModel {
     this.reservedAt,
     this.reservationDate,
     this.reservationTime,
+    this.customerName = '',
+    this.customerPhone = '',
   });
 
   factory ReservationModel.fromMap(String id, Map<String, dynamic> map) {
@@ -32,6 +36,8 @@ class ReservationModel {
       reservedAt: map['reservedAt']?.toDate(),
       reservationDate: map['reservationDate']?.toDate(),
       reservationTime: map['reservationTime']?.toString(),
+      customerName: map['customerName']?.toString() ?? '',
+      customerPhone: map['customerPhone']?.toString() ?? '',
     );
   }
 }

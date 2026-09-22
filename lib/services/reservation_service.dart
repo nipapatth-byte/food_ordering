@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/table_model.dart';
 import '../models/reservation_model.dart';
+import 'notification_service.dart';
 
 class ReservationService {
   final _db = FirebaseFirestore.instance;
+  final _notifications = NotificationService();
   static const int openingMinutes = 9 * 60;
   static const int closingMinutes = 21 * 60;
   static const int reservationDurationMinutes = 2 * 60;
@@ -32,6 +34,34 @@ class ReservationService {
         );
   }
 
+  // Stream เฉพาะ slot ของวันที่เลือก สำหรับตรวจสอบโต๊ะว่าง
+  Stream<Set<String>> streamReservedSlotIds(DateTime date) {
+    final dateOnly = DateTime(date.year, date.month, date.day);
+
+    return _db
+        .collection('reservation_slots')
+        .where('reservationDate', isEqualTo: Timestamp.fromDate(dateOnly))
+        .snapshots()
+        .map((snap) => snap.docs.map((doc) => doc.id).toSet());
+  }
+
+  // ตรวจว่าโต๊ะมีการจองชนกับช่วงเวลาที่เลือกหรือไม่
+  bool slotConflict({
+    required String tableId,
+    required DateTime date,
+    required String timeRange,
+    required Set<String> reservedSlotIds,
+  }) {
+    final hours = _slotHours(timeRange);
+    if (hours == null) return false;
+
+    final dateKey = _dateKey(date);
+
+    return hours.any(
+      (hour) => reservedSlotIds.contains('${tableId}_${dateKey}_$hour'),
+    );
+  }
+
   bool reservationOverlaps({
     required ReservationModel reservation,
     required DateTime date,
@@ -53,6 +83,49 @@ class ReservationService {
     final existing = _parseTimeRange(reservation.reservationTime!);
     if (requested == null || existing == null) return false;
     return requested.$1 < existing.$2 && existing.$1 < requested.$2;
+  }
+
+  // ตรวจสอบว่าสถานะ "กำลังใช้งาน" ของโต๊ะขัดกับช่วงเวลาที่ลูกค้าต้องการจองหรือไม่
+  // "กำลังใช้งาน" คือสถานะของโต๊ะ ณ ปัจจุบัน ไม่ใช่ Reservation แต่ลูกค้าหน้าร้านย่อมใช้เวลา
+  // อยู่ที่โต๊ะประมาณหนึ่ง (ปกติเทียบเท่ารอบจอง = reservationDurationMinutes) ไม่ใช่แค่ "เสี้ยววินาทีนี้"
+  // และไม่ใช่การล็อกโต๊ะทั้งวันเช่นกัน จึงต้องเทียบกับ "ช่วงเวลาที่คาดว่าจะใช้งาน"
+  // (occupiedAt ถึง occupiedUntil ที่บันทึกไว้ตอน Admin กดเปลี่ยนสถานะ) ว่าทับซ้อนกับ
+  // ช่วงเวลาที่ลูกค้าเลือกหรือไม่ ส่วน Reservation อื่น ๆ ให้ตรวจสอบด้วย reservationOverlaps ตามปกติ
+  bool occupiedConflict({
+    required String tableStatus,
+    DateTime? occupiedAt,
+    DateTime? occupiedUntil,
+    required DateTime date,
+    required String timeRange,
+  }) {
+    if (tableStatus != 'occupied') return false;
+    final range = _parseTimeRange(timeRange);
+    if (range == null) return false;
+    final requestedStart = DateTime(
+      date.year,
+      date.month,
+      date.day,
+    ).add(Duration(minutes: range.$1));
+    final requestedEnd = DateTime(
+      date.year,
+      date.month,
+      date.day,
+    ).add(Duration(minutes: range.$2));
+
+    final now = DateTime.now();
+    if (occupiedUntil == null) {
+      // ไม่มีข้อมูลช่วงเวลาที่คาดว่าจะใช้งาน (เช่นข้อมูลเก่า) ให้ถือว่า
+      // กำลังใช้งานเฉพาะ ณ ขณะนี้เท่านั้น เป็นทางเลือกสำรองที่ปลอดภัยที่สุด
+      return !requestedStart.isAfter(now) && requestedEnd.isAfter(now);
+    }
+    if (!now.isBefore(occupiedUntil)) {
+      // ครบช่วงเวลาที่คาดว่าจะใช้งานแล้ว ถือว่าไม่ใช่ช่วงที่กำลังใช้งานอยู่อีกต่อไป
+      // (แม้ Admin จะยังไม่ได้กดเปลี่ยนสถานะกลับเป็นว่างก็ตาม)
+      return false;
+    }
+    final blockStart = occupiedAt ?? now;
+    return requestedStart.isBefore(occupiedUntil) &&
+        blockStart.isBefore(requestedEnd);
   }
 
   (int, int)? _parseTimeRange(String value) {
@@ -107,7 +180,24 @@ class ReservationService {
       if (currentStatus == 'reserved') {
         throw Exception('โต๊ะนี้มีการจองออนไลน์อยู่ จัดการจากหน้าการจองแทน');
       }
-      transaction.update(tableRef, {'status': status});
+      if (status == 'occupied') {
+        // บันทึกช่วงเวลาที่คาดว่าลูกค้าหน้าร้านจะใช้โต๊ะนี้ (ค่าเริ่มต้นเท่ากับ 1 รอบจอง)
+        // เพื่อให้ระบบรู้ว่าจะทับซ้อนกับการจองล่วงหน้าช่วงไหนบ้าง โดยไม่ล็อกโต๊ะทั้งวัน
+        final now = DateTime.now();
+        transaction.update(tableRef, {
+          'status': status,
+          'occupiedAt': Timestamp.fromDate(now),
+          'occupiedUntil': Timestamp.fromDate(
+            now.add(const Duration(minutes: reservationDurationMinutes)),
+          ),
+        });
+      } else {
+        transaction.update(tableRef, {
+          'status': status,
+          'occupiedAt': FieldValue.delete(),
+          'occupiedUntil': FieldValue.delete(),
+        });
+      }
     });
   }
 
@@ -123,21 +213,16 @@ class ReservationService {
     final tableRef = _db.collection('tables').doc(tableId);
 
     try {
-      final legacyReservations = await _db
-          .collection('reservations')
-          .where('tableId', isEqualTo: tableId)
-          .get();
-      final legacyConflict = legacyReservations.docs.any((doc) {
-        return reservationOverlaps(
-          reservation: ReservationModel.fromMap(doc.id, doc.data()),
-          date: reservationDate,
-          timeRange: reservationTime,
-        );
-      });
-      if (legacyConflict) {
-        return 'โต๊ะนี้ถูกจองในช่วงเวลานี้แล้ว กรุณาเลือกเวลาอื่น';
+      final today = DateTime.now();
+      final selectedDay = DateTime(
+        reservationDate.year,
+        reservationDate.month,
+        reservationDate.day,
+      );
+      final currentDay = DateTime(today.year, today.month, today.day);
+      if (selectedDay.isBefore(currentDay)) {
+        return 'ไม่สามารถจองวันที่ผ่านมาแล้วได้';
       }
-
       final requestedRange = _parseTimeRange(reservationTime);
       if (requestedRange == null ||
           requestedRange.$1 < openingMinutes ||
@@ -145,7 +230,16 @@ class ReservationService {
           requestedRange.$2 - requestedRange.$1 != reservationDurationMinutes) {
         return 'ร้านเปิดให้จองเวลา 09.00-21.00 น. รอบละ 2 ชั่วโมง';
       }
+      if (selectedDay == currentDay &&
+          requestedRange.$1 <= (today.hour * 60 + today.minute)) {
+        return 'ไม่สามารถจองเวลาที่ผ่านไปแล้วได้';
+      }
+      final userSnapshot = await _db.collection('users').doc(userId).get();
+      final userData = userSnapshot.data() ?? <String, dynamic>{};
+      final customerName = userData['displayName']?.toString().trim() ?? '';
+      final customerPhone = userData['phone']?.toString().trim() ?? '';
 
+      var tableLabel = tableId;
       await _db.runTransaction((transaction) async {
         final snapshot = await transaction.get(tableRef);
 
@@ -153,9 +247,25 @@ class ReservationService {
           throw Exception('ไม่พบโต๊ะนี้');
         }
 
-        final currentStatus = snapshot.get('status');
-        if (currentStatus == 'occupied') {
-          throw Exception('โต๊ะนี้กำลังใช้งานหน้าร้าน');
+        final tableData = snapshot.data() ?? <String, dynamic>{};
+        tableLabel = snapshot.data()?['tableNumber']?.toString() ?? tableId;
+        final currentStatus = (tableData['status'] as String?) ?? 'available';
+        final seatCount = (tableData['seatCount'] as num?)?.toInt() ?? 0;
+        if (partySize <= 0 || partySize > seatCount) {
+          throw Exception('จำนวนผู้จองเกินจำนวนที่นั่งของโต๊ะนี้');
+        }
+        // "กำลังใช้งาน" เป็นสถานะปัจจุบันของโต๊ะ ไม่ใช่การล็อกโต๊ะทั้งวัน
+        // จึงบล็อกเฉพาะช่วงเวลาที่คาดว่าลูกค้าหน้าร้านจะยังนั่งอยู่ (occupiedAt-occupiedUntil)
+        if (occupiedConflict(
+          tableStatus: currentStatus,
+          occupiedAt: (tableData['occupiedAt'] as Timestamp?)?.toDate(),
+          occupiedUntil: (tableData['occupiedUntil'] as Timestamp?)?.toDate(),
+          date: reservationDate,
+          timeRange: reservationTime,
+        )) {
+          throw Exception(
+            'โต๊ะนี้กำลังใช้งานหน้าร้านอยู่ในขณะนี้ กรุณาเลือกเวลาอื่น',
+          );
         }
 
         final hours = _slotHours(reservationTime);
@@ -177,11 +287,6 @@ class ReservationService {
           throw Exception('โต๊ะนี้ถูกจองในช่วงเวลานี้แล้ว กรุณาเลือกเวลาอื่น');
         }
 
-        // Keep the table available; reservations are time-slot based.
-        if (currentStatus == 'reserved') {
-          transaction.update(tableRef, {'status': 'available'});
-        }
-
         // สร้างเอกสารการจอง
         final reservationRef = _db.collection('reservations').doc();
         transaction.set(reservationRef, {
@@ -189,6 +294,8 @@ class ReservationService {
           'tableId': tableId,
           'tableNumber': snapshot.get('tableNumber'),
           'partySize': partySize,
+          'customerName': customerName,
+          'customerPhone': customerPhone,
           'status': 'pending',
           'reservedAt': FieldValue.serverTimestamp(),
           'reservationDate': Timestamp.fromDate(
@@ -215,6 +322,12 @@ class ReservationService {
           });
         }
       });
+      await _notifications.notifyAdmins(
+        title: 'มีการจองโต๊ะใหม่',
+        message:
+            '${customerName.isEmpty ? 'ลูกค้า' : customerName} จองโต๊ะ $tableLabel เวลา $reservationTime',
+        type: 'new_reservation',
+      );
       return null; // สำเร็จ ไม่มี error
     } catch (e) {
       return e.toString().replaceAll('Exception: ', '');
@@ -264,6 +377,7 @@ class ReservationService {
 
     await _db.runTransaction((transaction) async {
       final reservationSnapshot = await transaction.get(reservationRef);
+      final tableSnapshot = await transaction.get(tableRef);
       final currentStatus = reservationSnapshot.data()?['status']?.toString();
       if (currentStatus == 'completed' || currentStatus == 'cancelled') {
         throw Exception('การจองนี้จบแล้ว ไม่สามารถเปลี่ยนสถานะต่อได้');
@@ -293,13 +407,22 @@ class ReservationService {
             }
           }
         }
-        final tableSnapshot = await transaction.get(tableRef);
         if (tableSnapshot.data()?['status'] == 'reserved') {
           transaction.update(tableRef, {'status': 'available'});
         }
       }
       transaction.update(reservationRef, {'status': status});
     });
+    final reservation = await reservationRef.get();
+    final userId = reservation.data()?['userId']?.toString();
+    if (userId != null && userId.isNotEmpty) {
+      await _notifications.notifyUser(
+        userId: userId,
+        title: 'สถานะการจองเปลี่ยนแปลง',
+        message: 'การจองโต๊ะของคุณเปลี่ยนเป็นสถานะ $status',
+        type: 'reservation_status',
+      );
+    }
   }
 
   Future<void> cancelReservation(String reservationId, String tableId) async {

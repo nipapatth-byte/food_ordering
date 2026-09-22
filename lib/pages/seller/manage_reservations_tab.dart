@@ -42,9 +42,11 @@ class ManageReservationsTab extends StatelessWidget {
                     'จำนวน ${reservation.partySize} คน',
                   ),
                   subtitle: Text(
-                    'ลูกค้า: ${reservation.userId}\n'
+                    'ลูกค้า: ${reservation.customerName.isEmpty ? reservation.userId : reservation.customerName}'
+                    '${reservation.customerPhone.isEmpty ? '' : ' • ${reservation.customerPhone}'}\n'
+                    'เลขการจอง: ${reservation.id}\n'
                     '${_reservationSchedule(reservation)}\n'
-                    'สถานะ: ${reservation.status}',
+                    'จำนวน: ${reservation.partySize} คน • สถานะ: ${reservation.status}',
                   ),
                   isThreeLine: true,
                   trailing: PopupMenuButton<String>(

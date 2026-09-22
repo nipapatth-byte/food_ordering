@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../models/table_model.dart';
-import '../../models/reservation_model.dart';
 import '../../services/reservation_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/reservation_provider.dart';
@@ -58,18 +58,23 @@ class _TableLayoutPageState extends State<TableLayoutPage> {
           _selectedTable = null;
         }
 
-        return StreamBuilder<List<ReservationModel>>(
-          stream: _reservationService.streamReservations(),
-          builder: (context, reservationsSnapshot) {
-            if (reservationsSnapshot.hasError) {
+        return StreamBuilder<Set<String>>(
+          stream: _reservationService.streamReservedSlotIds(_selectedDate),
+          builder: (context, slotsSnapshot) {
+            if (slotsSnapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (slotsSnapshot.hasError) {
               return Center(
                 child: Text(
-                  'โหลดข้อมูลการจองไม่สำเร็จ: ${reservationsSnapshot.error}',
+                  'โหลดข้อมูลการจองไม่สำเร็จ: ${slotsSnapshot.error}',
                   style: const TextStyle(color: Colors.white),
                 ),
               );
             }
-            final reservations = reservationsSnapshot.data ?? [];
+
+            final reservedSlotIds = slotsSnapshot.data ?? <String>{};
             return Column(
               children: [
                 _buildFilters(),
@@ -88,24 +93,32 @@ class _TableLayoutPageState extends State<TableLayoutPage> {
                         ),
                     itemBuilder: (context, index) {
                       final table = tables[index];
-                      final occupied = table.status == 'occupied';
-                      final available =
-                          !occupied &&
-                          !reservations.any(
-                            (reservation) =>
-                                reservation.tableId == table.id &&
-                                _reservationService.reservationOverlaps(
-                                  reservation: reservation,
-                                  date: _selectedDate,
-                                  timeRange:
-                                      '${_formatTime(_selectedStartTime)}-${_formatTime(_selectedEndTime)}',
-                                ),
-                          );
+                      final selectedRange =
+                          '${_formatTime(_selectedStartTime)}-${_formatTime(_selectedEndTime)}';
+                      // "กำลังใช้งาน" มีผลต่อการจองเฉพาะช่วงเวลาที่คาดว่าลูกค้าหน้าร้าน
+                      // จะยังนั่งอยู่ (occupiedAt-occupiedUntil ที่บันทึกตอน Admin กดเปลี่ยน
+                      // สถานะ) เท่านั้น ไม่ใช่การล็อกโต๊ะทั้งวัน ส่วนช่วงเวลาที่มี Reservation
+                      // อยู่แล้วให้ตรวจสอบแยกด้วย reservationOverlaps ตามปกติ
+                      final occupiedNow = _reservationService.occupiedConflict(
+                        tableStatus: table.status,
+                        occupiedAt: table.occupiedAt,
+                        occupiedUntil: table.occupiedUntil,
+                        date: _selectedDate,
+                        timeRange: selectedRange,
+                      );
+                      final reservedConflict = _reservationService.slotConflict(
+                        tableId: table.id,
+                        date: _selectedDate,
+                        timeRange: selectedRange,
+                        reservedSlotIds: reservedSlotIds,
+                      );
+
+                      final available = !occupiedNow && !reservedConflict;
                       final selected = _selectedTable?.id == table.id;
                       return _TableCard(
                         table: table,
                         available: available,
-                        occupied: occupied,
+                        occupied: occupiedNow,
                         selected: selected,
                         onTap: available ? () => _selectTable(table) : null,
                       );

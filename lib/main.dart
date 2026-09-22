@@ -15,7 +15,6 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -78,7 +77,7 @@ class MyApp extends StatelessWidget {
           ),
           snackBarTheme: const SnackBarThemeData(
             behavior: SnackBarBehavior.floating,
-              backgroundColor: Color(0xFFE6391A),
+            backgroundColor: Color(0xFFE6391A),
             contentTextStyle: TextStyle(color: Colors.white),
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(

@@ -101,6 +101,8 @@ class _IncomingOrdersTabState extends State<IncomingOrdersTab> {
                       }),
                       onStatusSelected: (status) =>
                           _orderService.updateStatus(order.id, status),
+                      onPaymentStatusSelected: (status) =>
+                          _orderService.updatePaymentStatus(order.id, status),
                     );
                   },
                 );
@@ -129,12 +131,14 @@ class _OrderCard extends StatelessWidget {
   final bool expanded;
   final VoidCallback onUpdate;
   final Future<void> Function(String status) onStatusSelected;
+  final Future<void> Function(String status) onPaymentStatusSelected;
 
   const _OrderCard({
     required this.order,
     required this.expanded,
     required this.onUpdate,
     required this.onStatusSelected,
+    required this.onPaymentStatusSelected,
   });
 
   @override
@@ -173,6 +177,13 @@ class _OrderCard extends StatelessWidget {
             customer,
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
           ),
+          if (order.customerPhone.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              'โทร ${order.customerPhone}',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ],
           const SizedBox(height: 10),
           Container(
             width: double.infinity,
@@ -206,6 +217,44 @@ class _OrderCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
+          Text(
+            'วิธีชำระเงิน: ${_paymentMethodLabel(order.paymentMethod)}'
+            ' • สถานะชำระเงิน: ${_paymentLabel(order.paymentStatus)}',
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+          if (order.paymentStatus != 'paid') ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  try {
+                    await onPaymentStatusSelected('paid');
+                  } catch (error) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('อัปเดตการชำระเงินไม่สำเร็จ: $error'),
+                        ),
+                      );
+                    }
+                  }
+                },
+                icon: const Icon(Icons.check_circle_outline, size: 18),
+                label: const Text('ทำเครื่องหมายว่า “ชำระแล้ว”'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+          if (order.notes.isNotEmpty)
+            Text(
+              'หมายเหตุ: ${order.notes}',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            ),
+          const SizedBox(height: 6),
           Text(
             order.items
                 .map((item) => '${item['name']} x${item['qty']}')
@@ -262,6 +311,30 @@ class _OrderCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _paymentLabel(String status) {
+    switch (status) {
+      case 'paid':
+        return 'ชำระแล้ว';
+      case 'pending':
+        return 'รอตรวจสอบ';
+      case 'rejected':
+        return 'ไม่ผ่าน';
+      default:
+        return 'ยังไม่ชำระ';
+    }
+  }
+
+  String _paymentMethodLabel(String method) {
+    switch (method) {
+      case 'promptpay':
+        return 'PromptPay';
+      case 'cash':
+        return 'เงินสด';
+      default:
+        return 'ไม่ระบุ (ออเดอร์เก่า)';
+    }
   }
 }
 

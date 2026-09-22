@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import 'customer/customer_shell.dart';
 import 'customer/splash_page.dart';
 import 'seller/seller_shell.dart';
+import '../widgets/notification_overlay.dart';
 
 // ตัวตัดสินใจว่าจะโชว์ splash / แอปฝั่งลูกค้า / ฝั่งร้านค้า
 // ทำงานอัตโนมัติ: พอ role เปลี่ยน (login/logout/register) จะสลับ shell ทั้งแอปทันที
@@ -22,8 +23,14 @@ class MainScaffold extends StatelessWidget {
 
     // ยังไม่ login หรือ login แล้วเป็นลูกค้า -> เห็น shell ลูกค้า (guest ก็ดูเมนู/โต๊ะได้)
     if (auth.role == 'seller') {
-      return const SellerShell();
+      return NotificationOverlay(
+        userId: auth.user?.uid,
+        child: const SellerShell(),
+      );
     }
-    return const CustomerShell();
+    return NotificationOverlay(
+      userId: auth.user?.uid,
+      child: const CustomerShell(),
+    );
   }
 }

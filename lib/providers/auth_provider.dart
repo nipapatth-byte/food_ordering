@@ -49,17 +49,20 @@ class AuthProvider extends ChangeNotifier {
 
   Future<String?> login(String email, String password) async {
     _isLoading = true;
-    _initialized = false;
-    _role = null;
-    _profile = <String, dynamic>{};
     notifyListeners();
+
     final error = await _authService.login(email, password);
+
     _isLoading = false;
-    if (error != null && _user == null) {
-      _initialized = true;
+
+    // ถ้า Login ไม่สำเร็จ ต้องไม่เปลี่ยนสถานะผู้ใช้
+    if (error != null) {
+      notifyListeners();
+      return error;
     }
+
     notifyListeners();
-    return error;
+    return null;
   }
 
   Future<String?> register(

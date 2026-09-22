@@ -15,9 +15,29 @@ class AuthenticationService {
   Future<String?> login(String email, String password) async {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
-      return null; // สำเร็จ
+      return null;
     } on FirebaseAuthException catch (e) {
-      return e.message ?? 'เข้าสู่ระบบไม่สำเร็จ';
+      switch (e.code) {
+        case 'invalid-credential':
+        case 'wrong-password':
+        case 'user-not-found':
+          return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+
+        case 'invalid-email':
+          return 'รูปแบบอีเมลไม่ถูกต้อง';
+
+        case 'user-disabled':
+          return 'บัญชีนี้ถูกปิดใช้งาน';
+
+        case 'too-many-requests':
+          return 'มีการพยายามเข้าสู่ระบบหลายครั้ง กรุณาลองใหม่ภายหลัง';
+
+        case 'network-request-failed':
+          return 'ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้';
+
+        default:
+          return 'เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบอีเมลและรหัสผ่าน';
+      }
     }
   }
 

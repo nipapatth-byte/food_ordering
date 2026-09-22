@@ -60,12 +60,16 @@ class CartProvider extends ChangeNotifier {
   Future<String> checkout(
     String userId, {
     required String deliveryAddress,
+    String paymentMethod = 'cash',
+    String notes = '',
   }) async {
     final orderId = await _orderService.createOrder(
       userId: userId,
       cartItems: _items,
       deliveryAddress: deliveryAddress,
       deliveryFee: deliveryFee,
+      paymentMethod: paymentMethod,
+      notes: notes,
     );
     clearCart();
     return orderId;

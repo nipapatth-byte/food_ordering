@@ -237,6 +237,8 @@ class _MenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDailySpecial = item.source == 'external';
+
     return Container(
       height: 79,
       padding: const EdgeInsets.all(11),
@@ -247,34 +249,68 @@ class _MenuCard extends StatelessWidget {
       child: Row(
         children: [
           _MenuImage(url: item.imageUrl),
+
           const SizedBox(width: 12),
+
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  item.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF201D1B),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                  ),
+                Row(
+                  children: [
+                    if (isDailySpecial) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFB300),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const Text(
+                          'วันนี้',
+                          style: TextStyle(
+                            color: Color(0xFF24170E),
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+
+                    Expanded(
+                      child: Text(
+                        item.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF201D1B),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+
                 const SizedBox(height: 4),
+
                 Row(
                   children: [
                     Text(
-                      item.price.toStringAsFixed(0),
+                      '${item.price.toStringAsFixed(0)} บาท',
                       style: const TextStyle(
                         color: Color(0xFFF0321C),
                         fontSize: 14,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
+
                     const SizedBox(width: 10),
+
                     Flexible(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -304,6 +340,7 @@ class _MenuCard extends StatelessWidget {
               ],
             ),
           ),
+
           const SizedBox(width: 8),
         ],
       ),

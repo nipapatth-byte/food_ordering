@@ -23,7 +23,11 @@ class _PaymentPageState extends State<PaymentPage> {
       if (address.isEmpty) {
         throw StateError('ไม่พบที่อยู่จัดส่ง');
       }
-      await cart.checkout(auth.user!.uid, deliveryAddress: address);
+      await cart.checkout(
+        auth.user!.uid,
+        deliveryAddress: address,
+        paymentMethod: 'promptpay',
+      );
       if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
     } catch (error) {
       if (mounted) {

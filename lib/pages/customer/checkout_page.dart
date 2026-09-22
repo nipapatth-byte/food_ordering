@@ -14,6 +14,13 @@ class CheckoutPage extends StatefulWidget {
 class _CheckoutPageState extends State<CheckoutPage> {
   String _payment = 'cash';
   bool _submitting = false;
+  final _notesController = TextEditingController();
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
     final auth = context.read<AuthProvider>();
@@ -37,7 +44,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
     setState(() => _submitting = true);
     try {
-      await cart.checkout(auth.user!.uid, deliveryAddress: address);
+      await cart.checkout(
+        auth.user!.uid,
+        deliveryAddress: address,
+        paymentMethod: _payment,
+        notes: _notesController.text.trim(),
+      );
       if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
     } catch (error) {
       if (mounted) {
@@ -77,6 +89,21 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 color: Color(0xFF292321),
                 fontSize: 13,
                 height: 1.45,
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          _Section(
+            title: 'หมายเหตุถึงร้าน',
+            icon: Icons.note_alt_outlined,
+            child: TextField(
+              controller: _notesController,
+              maxLines: 2,
+              style: const TextStyle(color: Color(0xFF292321)),
+              decoration: const InputDecoration(
+                hintText: 'เช่น ไม่ใส่ผัก, โทรก่อนจัดส่ง',
+                filled: false,
+                border: InputBorder.none,
               ),
             ),
           ),

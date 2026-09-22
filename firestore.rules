@@ -1,0 +1,194 @@
+rules_version = '2';
+
+service cloud.firestore {
+
+  match /databases/{database}/documents {
+
+    // =====================================================
+    // AUTH
+    // =====================================================
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return signedIn()
+        && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && (
+          get(
+            /databases/$(database)/documents/users/$(request.auth.uid)
+          ).data.role == 'seller'
+
+          ||
+
+          get(
+            /databases/$(database)/documents/users/$(request.auth.uid)
+          ).data.role == 'admin'
+        );
+    }
+
+
+    // =====================================================
+    // USERS
+    // =====================================================
+
+    match /users/{userId} {
+
+      allow read: if signedIn();
+
+      allow create, update: if isOwner(userId) || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+
+    // =====================================================
+    // MENU
+    // =====================================================
+
+    match /menu_items/{menuId} {
+
+      // ทุกคนอ่านเมนูได้
+      allow read: if true;
+
+      // Admin / Seller จัดการเมนูได้ทั้งหมด
+      allow create, update, delete: if isAdmin();
+
+      // ลูกค้าที่ login แล้ว
+      // สร้างได้เฉพาะเมนู API ประจำวัน
+      // และราคาต้องเริ่มต้นที่ 0
+      allow create: if signedIn()
+        && request.resource.data.source == 'external'
+        && request.resource.data.price == 0
+        && request.resource.data.externalId is string
+        && request.resource.data.externalId != '';
+    }
+
+
+    // =====================================================
+    // TABLES
+    // =====================================================
+
+    match /tables/{tableId} {
+
+      allow read: if true;
+
+      allow create, update, delete: if isAdmin();
+    }
+
+
+    // =====================================================
+    // RESERVATIONS
+    // =====================================================
+
+    match /reservations/{reservationId} {
+
+      allow read: if isAdmin()
+        || (
+          signedIn()
+          && resource.data.userId == request.auth.uid
+        );
+
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending';
+
+      allow update: if isAdmin()
+        || (
+          signedIn()
+          && resource.data.userId == request.auth.uid
+          && request.resource.data.userId == resource.data.userId
+          && request.resource.data.status == 'cancelled'
+        );
+
+      allow delete: if isAdmin();
+    }
+
+
+    // =====================================================
+    // RESERVATION SLOTS
+    // =====================================================
+
+    match /reservation_slots/{slotId} {
+
+      allow read: if true;
+
+      allow write: if isAdmin() || signedIn();
+    }
+
+
+    // =====================================================
+    // ORDERS
+    // =====================================================
+
+    match /orders/{orderId} {
+
+      allow read: if isAdmin()
+        || (
+          signedIn()
+          && resource.data.userId == request.auth.uid
+        );
+
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending';
+
+      allow update: if isAdmin()
+        || (
+          signedIn()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.userId == resource.data.userId
+        );
+
+      allow delete: if isAdmin();
+    }
+
+
+    // =====================================================
+    // NOTIFICATIONS
+    // =====================================================
+
+    match /notifications/{notificationId} {
+
+      allow read: if signedIn()
+        && (
+          resource.data.userId == request.auth.uid
+          || isAdmin()
+        );
+
+      allow create: if signedIn();
+
+      allow update: if signedIn()
+        && (
+          resource.data.userId == request.auth.uid
+          || isAdmin()
+        );
+
+      allow delete: if isAdmin();
+    }
+
+
+    // =====================================================
+    // APP SETTINGS
+    // =====================================================
+
+    match /app_settings/{settingId} {
+
+      // ทุกคนอ่านได้
+      allow read: if true;
+
+      // Admin / Seller เขียนได้ทั้งหมด
+      allow write: if isAdmin();
+
+      // ลูกค้าที่ login แล้ว
+      // เขียนได้เฉพาะ daily_special
+      allow create, update: if signedIn()
+        && settingId == 'daily_special';
+    }
+  }
+}

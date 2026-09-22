@@ -51,6 +51,7 @@ class _ManageTablesTabState extends State<ManageTablesTab> {
                     onEdit: _showEditTableDialog,
                     onDelete: _confirmDeleteTable,
                     onStatus: _showTableStatusDialog,
+                    onViewSchedule: _showTableScheduleSheet,
                   )
                 : _ReservationsView(service: _service),
           ),
@@ -267,6 +268,145 @@ class _ManageTablesTabState extends State<ManageTablesTab> {
       }
     }
   }
+
+  // แสดงตารางการจองของโต๊ะนี้ "เฉพาะวันนี้" แยกเป็นรายโต๊ะ เรียงตามเวลา
+  // เพื่อให้ Admin เห็นภาพรวมว่าโต๊ะนี้มีคิวช่วงไหนบ้าง โดยไม่ต้องไปไล่หาในแท็บ
+  // "การจอง" ที่รวมทุกโต๊ะและทุกวันไว้ด้วยกัน ข้อมูลในนี้เป็นแบบ real-time
+  // (สตรีมจาก Firestore ตรง ๆ) จึงกดเปลี่ยนสถานะการจองจากในนี้ได้เลย
+  void _showTableScheduleSheet(
+    BuildContext context,
+    TableModel table,
+    List<ReservationModel> initialTodayReservations,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.35,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (sheetContext, scrollController) {
+          return SafeArea(
+            child: StreamBuilder<List<ReservationModel>>(
+              stream: _service.streamAllReservations(),
+              initialData: initialTodayReservations,
+              builder: (context, snapshot) {
+                final reservations = _todayReservationsForTable(
+                  snapshot.data ?? initialTodayReservations,
+                  table.id,
+                );
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                      child: Text(
+                        'คิววันนี้ • โต๊ะ ${table.tableNumber}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+                      child: Text(
+                        'รายการจองล่วงหน้าของโต๊ะนี้ในวันนี้ทั้งหมด '
+                        '(สถานะโต๊ะปัจจุบันไม่เกี่ยวกับรายการเหล่านี้)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF8B7B76),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: reservations.isEmpty
+                          ? const Center(
+                              child: Text('ยังไม่มีการจองโต๊ะนี้ในวันนี้'),
+                            )
+                          : ListView.separated(
+                              controller: scrollController,
+                              padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                              itemCount: reservations.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 10),
+                              itemBuilder: (context, index) =>
+                                  _TableScheduleTile(
+                                    reservation: reservations[index],
+                                    onChangeStatus: (status) =>
+                                        _changeReservationStatus(
+                                          context,
+                                          reservations[index],
+                                          status,
+                                        ),
+                                  ),
+                            ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _changeReservationStatus(
+    BuildContext context,
+    ReservationModel reservation,
+    String status,
+  ) async {
+    try {
+      await _service.updateReservationStatus(
+        reservation.id,
+        reservation.tableId,
+        status,
+      );
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('อัปเดตสถานะไม่สำเร็จ: $error')));
+      }
+    }
+  }
+}
+
+// กรอง + เรียงการจองของโต๊ะเดียว เฉพาะที่จองไว้สำหรับ "วันนี้" ตามเวลา
+// ใช้ร่วมกันทั้งตอนแสดง badge จำนวนคิวบนการ์ดโต๊ะ และในหน้าตารางเวลาของโต๊ะ
+List<ReservationModel> _todayReservationsForTable(
+  List<ReservationModel> all,
+  String tableId,
+) {
+  bool isToday(DateTime? date) {
+    if (date == null) return false;
+    final now = DateTime.now();
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
+  }
+
+  final filtered =
+      all
+          .where(
+            (reservation) =>
+                reservation.tableId == tableId &&
+                reservation.status != 'cancelled' &&
+                isToday(reservation.reservationDate),
+          )
+          .toList()
+        ..sort((a, b) {
+          final aTime = a.reservationTime ?? '';
+          final bTime = b.reservationTime ?? '';
+          return aTime.compareTo(bTime);
+        });
+  return filtered;
 }
 
 class _SectionToggle extends StatelessWidget {
@@ -343,52 +483,81 @@ class _TablesView extends StatelessWidget {
   final Future<void> Function(BuildContext context, TableModel table) onEdit;
   final Future<void> Function(BuildContext context, TableModel table) onDelete;
   final Future<void> Function(BuildContext context, TableModel table) onStatus;
+  final void Function(
+    BuildContext context,
+    TableModel table,
+    List<ReservationModel> todayReservations,
+  )
+  onViewSchedule;
 
   const _TablesView({
     required this.service,
     required this.onEdit,
     required this.onDelete,
     required this.onStatus,
+    required this.onViewSchedule,
   });
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<TableModel>>(
       stream: service.streamTables(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(child: Text('โหลดโต๊ะไม่สำเร็จ: ${snapshot.error}'));
+      builder: (context, tableSnapshot) {
+        if (tableSnapshot.hasError) {
+          return Center(
+            child: Text('โหลดโต๊ะไม่สำเร็จ: ${tableSnapshot.error}'),
+          );
         }
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (tableSnapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        final tables = snapshot.data ?? [];
+        final tables = tableSnapshot.data ?? [];
         if (tables.isEmpty) {
           return const Center(child: Text('ยังไม่มีโต๊ะ กดปุ่มเพิ่มโต๊ะ'));
         }
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final horizontalPadding = constraints.maxWidth >= 700 ? 24.0 : 16.0;
-            return GridView.builder(
-              padding: EdgeInsets.fromLTRB(
-                horizontalPadding,
-                0,
-                horizontalPadding,
-                100,
-              ),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 240,
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
-                childAspectRatio: 1.25,
-              ),
-              itemCount: tables.length,
-              itemBuilder: (context, index) => _TableCard(
-                table: tables[index],
-                onEdit: () => onEdit(context, tables[index]),
-                onDelete: () => onDelete(context, tables[index]),
-                onStatus: () => onStatus(context, tables[index]),
-              ),
+        // สตรีมการจองทั้งหมดมาด้วย เพื่อสรุปให้เห็นว่าแต่ละโต๊ะมีคิววันนี้กี่รายการ
+        // และให้ Admin เปิดดูตารางเวลาของโต๊ะนั้น ๆ ได้จากในการ์ดโต๊ะเลย
+        return StreamBuilder<List<ReservationModel>>(
+          stream: service.streamAllReservations(),
+          builder: (context, reservationSnapshot) {
+            final allReservations = reservationSnapshot.data ?? [];
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final horizontalPadding = constraints.maxWidth >= 700
+                    ? 24.0
+                    : 16.0;
+                return GridView.builder(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    0,
+                    horizontalPadding,
+                    100,
+                  ),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 240,
+                    crossAxisSpacing: 14,
+                    mainAxisSpacing: 14,
+                    childAspectRatio: 1.1,
+                  ),
+                  itemCount: tables.length,
+                  itemBuilder: (context, index) {
+                    final table = tables[index];
+                    final todayReservations = _todayReservationsForTable(
+                      allReservations,
+                      table.id,
+                    );
+                    return _TableCard(
+                      table: table,
+                      todayReservationCount: todayReservations.length,
+                      onEdit: () => onEdit(context, table),
+                      onDelete: () => onDelete(context, table),
+                      onStatus: () => onStatus(context, table),
+                      onViewSchedule: () =>
+                          onViewSchedule(context, table, todayReservations),
+                    );
+                  },
+                );
+              },
             );
           },
         );
@@ -399,15 +568,19 @@ class _TablesView extends StatelessWidget {
 
 class _TableCard extends StatelessWidget {
   final TableModel table;
+  final int todayReservationCount;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onStatus;
+  final VoidCallback onViewSchedule;
 
   const _TableCard({
     required this.table,
+    required this.todayReservationCount,
     required this.onEdit,
     required this.onDelete,
     required this.onStatus,
+    required this.onViewSchedule,
   });
 
   @override
@@ -454,6 +627,51 @@ class _TableCard extends StatelessWidget {
             style: TextStyle(
               color: unavailable ? Colors.white : const Color(0xFF8B7B76),
               fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 8),
+          // ปุ่มดูคิว/การจองของโต๊ะนี้ในวันนี้ทั้งหมด แยกจากสถานะโต๊ะปัจจุบัน
+          // เพื่อให้ Admin เห็นได้ทันทีว่าโต๊ะนี้มีคนจองไว้เวลาอื่นของวันนี้อีกหรือไม่
+          GestureDetector(
+            onTap: onViewSchedule,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              decoration: BoxDecoration(
+                color: unavailable
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : const Color(0xFFFFF4E8),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.event_note,
+                    size: 14,
+                    color: unavailable ? Colors.white : const Color(0xFFF0321C),
+                  ),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      todayReservationCount > 0
+                          ? 'คิววันนี้ $todayReservationCount รายการ'
+                          : 'ไม่มีคิววันนี้',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: unavailable
+                            ? Colors.white
+                            : const Color(0xFFF0321C),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 14,
+                    color: unavailable ? Colors.white : const Color(0xFFF0321C),
+                  ),
+                ],
+              ),
             ),
           ),
           const Spacer(),
@@ -506,6 +724,85 @@ class _StatusChip extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.w900,
         ),
+      ),
+    );
+  }
+}
+
+// การ์ดแสดงรายการจองหนึ่งรายการในหน้าตารางเวลาของโต๊ะ (per-table schedule sheet)
+// ใช้ label/สีชุดเดียวกับ _StatusAction, _ReservationStatus ที่มีอยู่แล้ว
+class _TableScheduleTile extends StatelessWidget {
+  final ReservationModel reservation;
+  final void Function(String status) onChangeStatus;
+
+  const _TableScheduleTile({
+    required this.reservation,
+    required this.onChangeStatus,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final statusText = switch (reservation.status) {
+      'pending' => 'รอดำเนินการ',
+      'confirmed' => 'จองแล้ว',
+      'completed' => 'สำเร็จ',
+      'cancelled' => 'ยกเลิกแล้ว',
+      _ => reservation.status,
+    };
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4E8),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFF0DFCF)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                reservation.reservationTime ?? 'ไม่ระบุเวลา',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF201D1B),
+                ),
+              ),
+              _ReservationStatus(label: statusText, status: reservation.status),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'จำนวน ${reservation.partySize} คน',
+            style: const TextStyle(color: Color(0xFF8B7B76), fontSize: 12),
+          ),
+          if (reservation.status != 'completed' &&
+              reservation.status != 'cancelled') ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                if (reservation.status == 'pending')
+                  _StatusAction(
+                    label: 'ยืนยัน',
+                    onPressed: () => onChangeStatus('confirmed'),
+                  ),
+                if (reservation.status == 'confirmed')
+                  _StatusAction(
+                    label: 'สำเร็จ',
+                    onPressed: () => onChangeStatus('completed'),
+                  ),
+                _StatusAction(
+                  label: 'ยกเลิก',
+                  onPressed: () => onChangeStatus('cancelled'),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }
