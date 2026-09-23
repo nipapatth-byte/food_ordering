@@ -56,12 +56,26 @@ class GroupInfoPage extends StatelessWidget {
             ),
             const SizedBox(height: 30),
             Center(
-              child: ClipOval(
-                child: Image.asset(
-                  'lib/assests/images/kinraidee.png',
-                  width: 186,
-                  height: 186,
-                  fit: BoxFit.cover,
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFFF4D26), width: 2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x55000000),
+                      blurRadius: 16,
+                      offset: Offset(0, 7),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: Image.asset(
+                    'lib/assests/images/kinraidee.png',
+                    width: 176,
+                    height: 176,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),
@@ -142,6 +156,13 @@ class _MemberCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(17),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x44000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [

@@ -68,6 +68,31 @@ class AuthenticationService {
     }
   }
 
+  Future<String?> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+      return null;
+    } on FirebaseAuthException catch (e) {
+      switch (e.code) {
+        case 'invalid-email':
+          return 'รูปแบบอีเมลไม่ถูกต้อง';
+
+        case 'user-not-found':
+          // ใช้ข้อความกลาง ไม่เปิดเผยว่าอีเมลมีบัญชีหรือไม่
+          return null;
+
+        case 'too-many-requests':
+          return 'มีการขอรีเซ็ตรหัสผ่านหลายครั้ง กรุณาลองใหม่ภายหลัง';
+
+        case 'network-request-failed':
+          return 'ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้';
+
+        default:
+          return 'ไม่สามารถส่งอีเมลรีเซ็ตรหัสผ่านได้';
+      }
+    }
+  }
+
   Future<void> logout() async => await _auth.signOut();
 
   Future<void> updateProfile({

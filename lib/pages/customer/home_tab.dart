@@ -31,9 +31,13 @@ class _HomeTabState extends State<HomeTab> {
   static const List<String> _categories = [
     'ทั้งหมด',
     'อาหารจานหลัก',
+    'ของทานเล่น',
+    'ชุดหมูกะทะ',
+    'กุ้งเผา',
+    'ก๋วยเตี๋ยว',
     'ของหวาน',
     'เครื่องดื่ม',
-    'ทานเล่น',
+    'เครื่องดื่มแอลกอฮอล',
   ];
 
   @override
@@ -165,7 +169,7 @@ class _HomeTabState extends State<HomeTab> {
             style: TextStyle(
               color: primaryRed,
               fontFamily: 'FCMinimal',
-              fontSize: 24,
+              fontSize: 26,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -267,6 +271,13 @@ class _HomeTabState extends State<HomeTab> {
         decoration: BoxDecoration(
           color: const Color(0xFF15120F),
           borderRadius: BorderRadius.circular(28),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x66000000),
+              blurRadius: 18,
+              offset: Offset(0, 8),
+            ),
+          ],
         ),
         child: Stack(
           fit: StackFit.expand,

@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFFE6391A),
+            seedColor: const Color(0xFFFF4D26),
             brightness: Brightness.dark,
           ),
           scaffoldBackgroundColor: Colors.black,
@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
             backgroundColor: Colors.black,
             foregroundColor: Colors.white,
             surfaceTintColor: Colors.transparent,
-            toolbarHeight: 66,
+            toolbarHeight: 70,
             titleTextStyle: TextStyle(
               color: Colors.white,
               fontSize: 22,
@@ -62,16 +62,19 @@ class MyApp extends StatelessWidget {
           inputDecorationTheme: InputDecorationTheme(
             filled: true,
             fillColor: Color(0xFF201D1B),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+            hintStyle: TextStyle(color: Color(0xFF9B8C86)),
+            prefixIconColor: Color(0xFFB8AAA5),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(color: Color(0xFF4B3A35), width: 1),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(color: Color(0xFF4B3A35), width: 1),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(color: Color(0xFFE6391A), width: 2),
             ),
           ),
@@ -82,23 +85,44 @@ class MyApp extends StatelessWidget {
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE6391A),
+              backgroundColor: const Color(0xFFF0321C),
               foregroundColor: Colors.white,
-              minimumSize: const Size(0, 50),
+              minimumSize: const Size(0, 52),
+              elevation: 3,
+              shadowColor: const Color(0x66F0321C),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(16),
               ),
-              textStyle: const TextStyle(fontWeight: FontWeight.w800),
+              textStyle: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
-          cardTheme: const CardThemeData(
+          cardTheme: CardThemeData(
             color: const Color(0xFF201D1B),
-            elevation: 0,
+            elevation: 3,
+            shadowColor: const Color(0x66000000),
             margin: EdgeInsets.zero,
             surfaceTintColor: Colors.transparent,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(18)),
-              side: BorderSide(color: Color(0xFF4B3A35)),
+              borderRadius: BorderRadius.all(Radius.circular(20)),
+              side: BorderSide(color: Color(0xFF3D302C)),
+            ),
+          ),
+          dialogTheme: DialogThemeData(
+            backgroundColor: const Color(0xFF201D1B),
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(22),
+            ),
+          ),
+          chipTheme: ChipThemeData(
+            backgroundColor: const Color(0xFF2A211F),
+            selectedColor: const Color(0xFFF0321C),
+            side: const BorderSide(color: Color(0xFF4B3A35)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
             ),
           ),
           useMaterial3: true,

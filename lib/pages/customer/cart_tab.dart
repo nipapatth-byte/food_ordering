@@ -23,7 +23,8 @@ class CartTab extends StatelessWidget {
           'ตะกร้าของฉัน',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 21,
+            fontFamily: 'FCMinimal',
+            fontSize: 24,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -99,6 +100,13 @@ class _CartItemCard extends StatelessWidget {
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFF333333)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x55000000),
+            blurRadius: 12,
+            offset: Offset(0, 5),
+          ),
+        ],
       ),
       child: Row(
         children: [

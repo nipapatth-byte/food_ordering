@@ -35,7 +35,9 @@ class ManageReservationsTab extends StatelessWidget {
             itemBuilder: (context, index) {
               final reservation = reservations[index];
               return Card(
+                margin: const EdgeInsets.only(bottom: 12),
                 child: ListTile(
+                  contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
                   leading: const Icon(Icons.table_bar),
                   title: Text(
                     'จองโต๊ะ ${reservation.tableNumber ?? reservation.tableId} '

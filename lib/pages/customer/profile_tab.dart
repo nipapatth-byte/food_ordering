@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../group_info_page.dart';
+import 'reset_password_page.dart';
 
 // หน้านี้ทำหน้าที่ 2 อย่าง:
 // - ยังไม่ login -> โชว์ฟอร์ม login/register (เลือก role ตอน register)
@@ -101,7 +102,7 @@ class _ProfileTabState extends State<ProfileTab> {
             context.read<AuthProvider>().updateProfile(displayName: value);
           }),
         ),
-        _ProfileCard(label: 'อีเมล', value: email, onEdit: () {}),
+        _ProfileCard(label: 'อีเมล', value: email, onEdit: null),
         _ProfileCard(
           label: 'เบอร์โทร',
           value: _profilePhone,
@@ -137,7 +138,11 @@ class _ProfileTabState extends State<ProfileTab> {
         const Center(
           child: Text(
             'โปรไฟล์แอดมิน',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+            style: TextStyle(
+              fontFamily: 'FCMinimal',
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ),
         const SizedBox(height: 36),
@@ -267,6 +272,24 @@ class _ProfileTabState extends State<ProfileTab> {
           hint: 'รหัสผ่าน',
           icon: Icons.lock,
           obscureText: true,
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ForgotPasswordPage()),
+              );
+            },
+            child: const Text(
+              'ลืมรหัสผ่าน?',
+              style: TextStyle(
+                color: Color(0xFFFF4D26),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
         ),
         const SizedBox(height: 24),
         _AuthButton(
@@ -400,7 +423,8 @@ class _ProfileBrand extends StatelessWidget {
               'โปรไฟล์',
               style: TextStyle(
                 color: Color(0xFFFF4D26),
-                fontSize: 20,
+                fontFamily: 'FCMinimal',
+                fontSize: 24,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -461,13 +485,9 @@ class _ProfileAvatar extends StatelessWidget {
 class _ProfileCard extends StatelessWidget {
   final String label;
   final String value;
-  final VoidCallback onEdit;
+  final VoidCallback? onEdit;
 
-  const _ProfileCard({
-    required this.label,
-    required this.value,
-    required this.onEdit,
-  });
+  const _ProfileCard({required this.label, required this.value, this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -477,6 +497,13 @@ class _ProfileCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFF0321C),
         borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x44000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -495,7 +522,7 @@ class _ProfileCard extends StatelessWidget {
               ],
             ),
           ),
-          _EditCircle(onPressed: onEdit),
+          if (onEdit != null) _EditCircle(onPressed: onEdit!),
         ],
       ),
     );

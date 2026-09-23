@@ -77,6 +77,13 @@ class _ReservationHistoryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFEF351B),
         borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x55000000),
+            blurRadius: 12,
+            offset: Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

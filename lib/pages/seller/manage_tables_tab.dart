@@ -23,7 +23,14 @@ class _ManageTablesTabState extends State<ManageTablesTab> {
         automaticallyImplyLeading: false,
         title: const Align(
           alignment: Alignment.centerLeft,
-          child: Text('จัดการโต๊ะ'),
+          child: Text(
+            'จัดการโต๊ะ',
+            style: TextStyle(
+              fontFamily: 'FCMinimal',
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ),
       ),
       floatingActionButton: _section == 0

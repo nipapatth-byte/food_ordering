@@ -91,7 +91,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
         automaticallyImplyLeading: true,
         title: const Text(
           'ยืนยันคำสั่งซื้อ',
-          style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+          style: TextStyle(
+            fontFamily: 'FCMinimal',
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+          ),
         ),
       ),
       body: ListView(
@@ -224,6 +228,13 @@ class _TotalSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x44000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -289,6 +300,13 @@ class _Section extends StatelessWidget {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x44000000),
+          blurRadius: 10,
+          offset: Offset(0, 4),
+        ),
+      ],
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,

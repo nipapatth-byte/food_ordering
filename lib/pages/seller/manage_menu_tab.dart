@@ -22,7 +22,14 @@ class _ManageMenuTabState extends State<ManageMenuTab> {
         automaticallyImplyLeading: false,
         title: const Align(
           alignment: Alignment.centerLeft,
-          child: Text('จัดการเมนู'),
+          child: Text(
+            'จัดการเมนู',
+            style: TextStyle(
+              fontFamily: 'FCMinimal',
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -245,6 +252,13 @@ class _MenuCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x44000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [

@@ -25,7 +25,11 @@ class _ReservationShellEntryState extends State<ReservationShellEntry> {
         elevation: 0,
         title: const Text(
           'จองโต๊ะ',
-          style: TextStyle(fontWeight: FontWeight.w900),
+          style: TextStyle(
+            fontFamily: 'FCMinimal',
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         actions: [
           _HeaderIcon(
@@ -127,6 +131,13 @@ class _SegmentedTabs extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x44000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -167,6 +178,15 @@ class _TabButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? const Color(0xFFFF5429) : Colors.white,
             borderRadius: BorderRadius.circular(22),
+            boxShadow: selected
+                ? const [
+                    BoxShadow(
+                      color: Color(0x44000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 3),
+                    ),
+                  ]
+                : null,
           ),
           child: Text(
             label,

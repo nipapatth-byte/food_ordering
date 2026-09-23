@@ -54,7 +54,16 @@ class _PaymentPageState extends State<PaymentPage> {
         'https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=PromptPay-${widget.amount.toStringAsFixed(0)}';
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(title: const Text('ชำระเงินด้วย QR พร้อมเพย์')),
+      appBar: AppBar(
+        title: const Text(
+          'ชำระเงินด้วย QR พร้อมเพย์',
+          style: TextStyle(
+            fontFamily: 'FCMinimal',
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 110),
         children: [
@@ -63,6 +72,13 @@ class _PaymentPageState extends State<PaymentPage> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(18),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x55000000),
+                  blurRadius: 14,
+                  offset: Offset(0, 6),
+                ),
+              ],
             ),
             child: Image.network(qrUrl, height: 280, fit: BoxFit.contain),
           ),

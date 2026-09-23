@@ -23,7 +23,14 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: const Text('รายละเอียดอาหาร'),
+        title: const Text(
+          'รายละเอียดอาหาร',
+          style: TextStyle(
+            fontFamily: 'FCMinimal',
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.shopping_cart_outlined),
@@ -69,7 +76,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
               Text(
                 '${item.price.toStringAsFixed(0)} บาท',
                 style: const TextStyle(
-                  color: Color(0xFFF0321C),
+                  color: Color(0xFFFF4D26),
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
                 ),
@@ -157,6 +164,7 @@ class _QuantityButton extends StatelessWidget {
       style: IconButton.styleFrom(
         backgroundColor: filled ? const Color(0xFFF0321C) : Colors.white,
         foregroundColor: filled ? Colors.white : Colors.black,
+        elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       icon: Icon(icon),

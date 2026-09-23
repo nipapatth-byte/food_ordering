@@ -39,7 +39,12 @@ class _IncomingOrdersTabState extends State<IncomingOrdersTab> {
         automaticallyImplyLeading: false,
         title: const Align(
           alignment: Alignment.centerLeft,
-          child: Text('รายการออเดอร์'),
+          child: Text('รายการออเดอร์',
+              style: TextStyle(
+                fontFamily: 'FCMinimal',
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+              )),
         ),
       ),
       body: Column(
@@ -155,6 +160,13 @@ class _OrderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFF0321C),
         borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x55000000),
+            blurRadius: 12,
+            offset: Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

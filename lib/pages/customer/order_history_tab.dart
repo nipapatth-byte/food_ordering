@@ -18,7 +18,38 @@ class OrderHistoryTab extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('คำสั่งซื้อของฉัน'),
+        backgroundColor: Colors.black,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        titleSpacing: 20,
+        toolbarHeight: 70,
+        title: Row(
+          children: [
+            Image.asset(
+              'lib/assests/images/chef.jpg',
+              width: 34,
+              height: 34,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) {
+                return const Icon(
+                  Icons.restaurant,
+                  color: Color(0xFFE8391A),
+                  size: 32,
+                );
+              },
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'คำสั่งซื้อของฉัน',
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: 'FCMinimal',
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton.filled(
             style: IconButton.styleFrom(
@@ -84,7 +115,7 @@ class OrderHistoryTab extends StatelessWidget {
                   );
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
+                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 100),
                   itemCount: orders.length,
                   itemBuilder: (context, index) {
                     final order = orders[index];
@@ -157,6 +188,13 @@ class _OrderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFF0321C),
         borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x55000000),
+            blurRadius: 12,
+            offset: Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

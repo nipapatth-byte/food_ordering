@@ -26,8 +26,12 @@ class _MenuFormPageState extends State<MenuFormPage> {
   static const _categories = [
     'อาหารจานหลัก',
     'ของทานเล่น',
+    'ชุดหมูกะทะ',
+    'กุ้งเผา',
+    'ก๋วยเตี๋ยว',
     'ของหวาน',
     'เครื่องดื่ม',
+    'เครื่องดื่มแอลกอฮอล',
   ];
 
   @override

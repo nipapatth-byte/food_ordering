@@ -50,6 +50,18 @@ class SplashPage extends StatelessWidget {
               ],
             ),
           ),
+          Positioned(
+            left: 24,
+            right: 24,
+            bottom: 24,
+            child: Container(
+              height: 3,
+              decoration: BoxDecoration(
+                color: const Color(0x66E6391A),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
         ],
       ),
     );

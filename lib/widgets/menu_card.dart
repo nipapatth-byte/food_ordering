@@ -39,7 +39,7 @@ class MenuCard extends StatelessWidget {
                   ),
           ),
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.fromLTRB(12, 11, 8, 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -56,17 +56,22 @@ class MenuCard extends StatelessWidget {
                     Text(
                       '${item.price.toStringAsFixed(0)} บาท',
                       style: const TextStyle(
-                        color: Color(0xFFC62828),
+                        color: Color(0xFFFF4D26),
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.add_circle,
-                        color: Color(0xFFC62828),
+                    Material(
+                      color: const Color(0xFFFF4D26),
+                      borderRadius: BorderRadius.circular(12),
+                      child: InkWell(
+                        onTap: onAddToCart,
+                        borderRadius: BorderRadius.circular(12),
+                        child: const Padding(
+                          padding: EdgeInsets.all(7),
+                          child: Icon(Icons.add, color: Colors.white, size: 19),
+                        ),
                       ),
-                      onPressed: onAddToCart,
-                      tooltip: 'เพิ่มลงตะกร้า',
                     ),
                   ],
                 ),

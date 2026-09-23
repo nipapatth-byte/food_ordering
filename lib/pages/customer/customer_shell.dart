@@ -31,15 +31,18 @@ class _CustomerShellState extends State<CustomerShell> {
       bottomNavigationBar: SafeArea(
         top: false,
         child: Container(
-          color: Colors.black,
-          padding: const EdgeInsets.fromLTRB(15, 10, 15, 10),
+          decoration: const BoxDecoration(
+            color: Colors.black,
+            border: Border(top: BorderSide(color: Color(0xFF2A211F))),
+          ),
+          padding: const EdgeInsets.fromLTRB(14, 9, 14, 9),
           child: GNav(
             backgroundColor: Colors.black,
             color: Colors.white70,
             activeColor: Colors.white,
-            tabBackgroundColor: const Color(0xFFE6391A),
+            tabBackgroundColor: const Color(0xFFF0321C),
             gap: 6,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             selectedIndex: _index,
             onTabChange: (index) => setState(() => _index = index),
             tabs: const [

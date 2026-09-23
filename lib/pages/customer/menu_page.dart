@@ -28,6 +28,9 @@ class MenuPage extends StatelessWidget {
             offset: const Offset(-2, 2),
             child: FloatingActionButton(
               tooltip: 'เปิดตะกร้าอาหาร',
+              elevation: 6,
+              backgroundColor: const Color(0xFFFF4D26),
+              foregroundColor: Colors.white,
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const CartTab()),

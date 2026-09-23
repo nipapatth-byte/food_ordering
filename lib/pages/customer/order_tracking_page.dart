@@ -30,7 +30,16 @@ class OrderTrackingPage extends StatelessWidget {
     };
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(title: const Text('สถานะออเดอร์')),
+      appBar: AppBar(
+        title: const Text(
+          'สถานะออเดอร์',
+          style: TextStyle(
+            fontFamily: 'FCMinimal',
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(22, 8, 22, 24),
         children: [
@@ -39,6 +48,13 @@ class OrderTrackingPage extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFFF0321C),
               borderRadius: BorderRadius.circular(18),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x55000000),
+                  blurRadius: 14,
+                  offset: Offset(0, 6),
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -75,6 +91,13 @@ class OrderTrackingPage extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(18),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x44000000),
+                  blurRadius: 12,
+                  offset: Offset(0, 5),
+                ),
+              ],
             ),
             child: Column(
               children: [

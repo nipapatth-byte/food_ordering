@@ -24,7 +24,14 @@ class _SalesReportTabState extends State<SalesReportTab> {
         automaticallyImplyLeading: false,
         title: const Align(
           alignment: Alignment.centerLeft,
-          child: Text('รายงานยอดขาย'),
+          child: Text(
+            'รายงานยอดขาย',
+            style: TextStyle(
+              fontFamily: 'FCMinimal',
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ),
       ),
       body: StreamBuilder<List<OrderModel>>(
@@ -192,6 +199,13 @@ class _HistoryCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFF0321C), width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x44000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
