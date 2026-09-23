@@ -131,7 +131,7 @@ class _ProfileTabState extends State<ProfileTab> {
     final name = isCompanyAdmin ? 'ประธานบริษัท' : 'แอดมิน กินไรดี';
     final image = isCompanyAdmin
         ? 'lib/assests/images/kinraidee.png'
-        : 'lib/assests/images/logo.png';
+        : 'lib/assests/images/chef.jpg';
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
       children: [
