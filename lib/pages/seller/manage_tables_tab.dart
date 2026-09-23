@@ -530,9 +530,22 @@ class _TablesView extends StatelessWidget {
             final allReservations = reservationSnapshot.data ?? [];
             return LayoutBuilder(
               builder: (context, constraints) {
-                final horizontalPadding = constraints.maxWidth >= 700
-                    ? 24.0
-                    : 16.0;
+                final width = constraints.maxWidth;
+                final horizontalPadding = width >= 700 ? 24.0 : 16.0;
+
+                // ค่าคอลัมน์/ความสูงจะปรับตามความกว้างหน้าจอ
+                final maxCrossAxisExtent = width < 420
+                    ? 180.0
+                    : width < 700
+                    ? 220.0
+                    : 260.0;
+
+                final itemHeight = width < 420
+                    ? 200.0
+                    : width < 700
+                    ? 210.0
+                    : 220.0;
+
                 return GridView.builder(
                   padding: EdgeInsets.fromLTRB(
                     horizontalPadding,
@@ -540,11 +553,11 @@ class _TablesView extends StatelessWidget {
                     horizontalPadding,
                     100,
                   ),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 240,
+                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: maxCrossAxisExtent,
                     crossAxisSpacing: 14,
                     mainAxisSpacing: 14,
-                    childAspectRatio: 1.1,
+                    mainAxisExtent: itemHeight,
                   ),
                   itemCount: tables.length,
                   itemBuilder: (context, index) {
@@ -637,8 +650,7 @@ class _TableCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          // ปุ่มดูคิว/การจองของโต๊ะนี้ในวันนี้ทั้งหมด แยกจากสถานะโต๊ะปัจจุบัน
-          // เพื่อให้ Admin เห็นได้ทันทีว่าโต๊ะนี้มีคนจองไว้เวลาอื่นของวันนี้อีกหรือไม่
+
           GestureDetector(
             onTap: onViewSchedule,
             child: Container(
@@ -681,8 +693,11 @@ class _TableCard extends StatelessWidget {
               ),
             ),
           ),
-          const Spacer(),
+
+          const SizedBox(height: 12),
           Divider(color: unavailable ? Colors.white : const Color(0xFFE9DDD7)),
+          const SizedBox(height: 8),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

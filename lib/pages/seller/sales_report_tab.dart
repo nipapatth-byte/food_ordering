@@ -116,7 +116,7 @@ class _SalesSummary extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _MetricCard(label: 'ยอดขายวันนี้', value: _money(revenue)),
+              child: _MetricCard(label: 'ยอดขาย', value: _money(revenue)),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -130,7 +130,7 @@ class _SalesSummary extends StatelessWidget {
         ),
         const SizedBox(height: 22),
         const Text(
-          'สถิติยอดขายสัปดาห์นี้',
+          'สถิติยอดขาย',
           style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 10),

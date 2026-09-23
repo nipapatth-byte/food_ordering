@@ -116,7 +116,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               if (_isSent) ...[
                 const SizedBox(height: 16),
                 const Text(
-                  'หากอีเมลนี้มีบัญชี เราจะส่งลิงก์รีเซ็ตรหัสผ่านให้ '
+                  'เราได้ส่งลิงก์รีเซ็ตรหัสผ่านให้คุณแล้ว '
                   'กรุณาตรวจสอบกล่องจดหมายและโฟลเดอร์สแปม',
                   style: TextStyle(color: Colors.greenAccent),
                 ),

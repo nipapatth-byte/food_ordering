@@ -30,14 +30,7 @@ class _HomeTabState extends State<HomeTab> {
 
   static const List<String> _categories = [
     'ทั้งหมด',
-    'อาหารจานหลัก',
-    'ของทานเล่น',
-    'ชุดหมูกะทะ',
-    'กุ้งเผา',
-    'ก๋วยเตี๋ยว',
-    'ของหวาน',
-    'เครื่องดื่ม',
-    'เครื่องดื่มแอลกอฮอล',
+    ...MenuService.categoryOrder,
   ];
 
   @override

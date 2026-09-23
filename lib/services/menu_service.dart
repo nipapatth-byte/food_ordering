@@ -9,30 +9,42 @@ import '../models/menu_item_model.dart';
 class MenuService {
   final _db = FirebaseFirestore.instance;
 
-  // ---------- ส่วนเมนูจริงของร้าน (เก็บใน Firestore) ----------
+  // ลำดับหมวดที่ต้องการ (แก้ลำดับตรงนี้ได้เลย)
+  static const List<String> categoryOrder = [
+    'อาหารจานหลัก',
+    'ก๋วยเตี๋ยว',
+    'กุ้งเผา',
+    'ชุดหมูกะทะ',
+    'ของทานเล่น',
+    'ของหวาน',
+    'เครื่องดื่ม',
+    'เครื่องดื่มแอลกอฮอล',
+  ];
 
-  // ฟังเมนูทั้งหมดแบบ real-time
+  static List<MenuItemModel> _sortMenu(List<MenuItemModel> items) {
+    int rank(String c) {
+      final i = categoryOrder.indexOf(c);
+      return i == -1 ? categoryOrder.length : i; // หมวดที่ไม่รู้จักไปท้ายสุด
+    }
+
+    items.sort((a, b) {
+      final c = rank(a.category).compareTo(rank(b.category));
+      if (c != 0) return c;
+      return a.name.compareTo(b.name); // ในหมวดเดียวกันเรียงตามชื่อ
+    });
+    return items;
+  }
+
   Stream<List<MenuItemModel>> streamAllMenu() {
     return _db
         .collection('menu_items')
         .snapshots()
         .map(
-          (snap) => snap.docs
-              .map((doc) => MenuItemModel.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
-  }
-
-  // ฟังเมนูเฉพาะหมวดหมู่
-  Stream<List<MenuItemModel>> streamMenuByCategory(String category) {
-    return _db
-        .collection('menu_items')
-        .where('category', isEqualTo: category)
-        .snapshots()
-        .map(
-          (snap) => snap.docs
-              .map((doc) => MenuItemModel.fromMap(doc.id, doc.data()))
-              .toList(),
+          (snap) => _sortMenu(
+            snap.docs
+                .map((doc) => MenuItemModel.fromMap(doc.id, doc.data()))
+                .toList(),
+          ),
         );
   }
 
@@ -111,7 +123,9 @@ class MenuService {
       // คนอื่นที่กำลังทำงานพร้อมกันจะอ่านค่าที่คนแรกบันทึกไว้
       // =====================================================
 
-      meal = await _db.runTransaction<Map<String, dynamic>>((transaction) async {
+      meal = await _db.runTransaction<Map<String, dynamic>>((
+        transaction,
+      ) async {
         final latestSnapshot = await transaction.get(specialRef);
         final latest = latestSnapshot.data();
         final latestDate = latest?['date']?.toString() ?? '';
@@ -152,9 +166,7 @@ class MenuService {
   // ราคาเริ่มต้น = 0
   // =====================================================
 
-  Future<MenuItemModel?> _ensureDailyMenuItem(
-    Map<String, dynamic> meal,
-  ) async {
+  Future<MenuItemModel?> _ensureDailyMenuItem(Map<String, dynamic> meal) async {
     final externalId = meal['mealId']?.toString() ?? '';
     final dailyDate = meal['date']?.toString() ?? '';
 
@@ -194,10 +206,7 @@ class MenuService {
           return null;
         }
 
-        return MenuItemModel.fromMap(
-          retry.id,
-          retry.data()!,
-        );
+        return MenuItemModel.fromMap(retry.id, retry.data()!);
       }
 
       rethrow;
@@ -264,10 +273,7 @@ class MenuService {
   // แก้ไขเมนู
   // =====================================================
 
-  Future<void> updateMenuItem(
-    String id,
-    Map<String, dynamic> data,
-  ) async {
+  Future<void> updateMenuItem(String id, Map<String, dynamic> data) async {
     await _db.collection('menu_items').doc(id).update(data);
   }
 
